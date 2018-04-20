@@ -25,7 +25,6 @@ def _recompile(pattern):
     return re.compile(pattern, re.I | re.X)
 
 def _research(pattern, string):
-    string = string.strip().upper()
     items = pattern.search(string)
 
     if items is None:
@@ -66,7 +65,7 @@ def _parselocation(string):
     return None, tail
 
 def parse(string):
-    metartype, tail = _parsetype(string)
+    metartype, tail = _parsetype(string.strip().upper())
     location, tail = _parselocation(tail)
     return {
         'type': metartype,

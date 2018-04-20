@@ -50,9 +50,9 @@ class MetarTests(unittest.TestCase):
 
         if test is not None:
             self.assertIn(test, ('METAR', 'SPECI'))
-            self.assertNotEqual(tail, string.strip().upper())
+            self.assertNotEqual(tail, string)
         else:
-            self.assertEqual(string.strip().upper(), tail)
+            self.assertEqual(string, tail)
 
     @data(
         'A000',
@@ -68,6 +68,5 @@ class MetarTests(unittest.TestCase):
             self.assertTrue(test[0].isalpha())
             for char in test[1:]:
                 self.assertTrue(char.isalpha() or char.isdigit())
-            self.assertEqual(test, test.upper())
         else:
-            self.assertEqual(string.strip(), tail)
+            self.assertEqual(string.strip().upper(), tail)
