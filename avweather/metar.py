@@ -40,6 +40,10 @@ LOCATION_RE = _recompile(r"""
     (?P<location>[A-Z][A-Z0-9]{3})
 """)
 
+TIME_RE = _recompile(r"""
+    (?P<time>[0-9]{6})Z
+""")
+
 def _parsetype(string):
     match = _research(TYPE_RE, string)
     if match is None:
@@ -64,11 +68,31 @@ def _parselocation(string):
 
     return None, tail
 
+def _parsetime(string):
+    match = _research(TIME_RE, string)
+    if match is None:
+        return None, string
+
+    time, tail = match
+
+    if 'time' in time:
+        time = time['time']
+
+        day = int(time[:2])
+        hour = int(time[2:4])
+        minute = int(time[4:])
+
+        return (day, hour, minute), tail
+
+    return None, tail
+
 def parse(string):
     metartype, tail = _parsetype(string.strip().upper())
     location, tail = _parselocation(tail)
+    time, tail = _parsetime(tail)
     return {
         'type': metartype,
         'location': location,
+        'time': time,
         'unmatched': tail,
     }

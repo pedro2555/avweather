@@ -38,6 +38,7 @@ class MetarTests(unittest.TestCase):
         self.assertIn('type', test)
         self.assertIn('location', test)
         self.assertIn('unmatched', test)
+        self.assertIn('time', test)
 
     @data(
         '',
@@ -69,4 +70,19 @@ class MetarTests(unittest.TestCase):
             for char in test[1:]:
                 self.assertTrue(char.isalpha() or char.isdigit())
         else:
-            self.assertEqual(string.strip().upper(), tail)
+            self.assertEqual(string, tail)
+
+    @data(
+        '010000Z',
+        '300200Z dsfacvx'
+    )
+    def test_parsetime(self, string):
+        test, tail = metar._parsetime(string)
+
+        if test is not None:
+            day, hour, minute = test
+            self.assertIsInstance(day, int)
+            self.assertIsInstance(hour, int)
+            self.assertIsInstance(minute, int)
+        else:
+            self.assertEqual(string, tail)
