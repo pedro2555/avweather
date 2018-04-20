@@ -19,54 +19,19 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 import re
 
-PATTERN = (
-    r"""(?P<metartype>
-         METAR|METAR\sCOR|SPECI
-    )""",
-    r"""(?P<station>
-        [A-Z][A-Z0-9]{3}
-    )""",
-    r"""(?P<time>
-        [\d]{6}Z
-    )""",
-    r"""(?P<metreporttype>(AUTO|NIL)?)
-        (?P<metreport>.*)""",
-)
-PATTERN = '^%s$' % r'\s'.join(PATTERN)
-PATTERN = re.compile(PATTERN, re.I | re.X)
+def _recompile(pattern):
+    print('^%s$' % ''.join(pattern))
+    return re.compile('^%s$' % r'\s'.join(pattern), re.I | re.X)
 
-def match(report):
-    """Maps a given METAR textual report into a python dictionary"""
+def _research(pattern, string):
+    items = pattern.search(string.strip())
 
-    if not isinstance(report, str):
-        raise TypeError('expected string but %s given.' % type(report))
+    if items is None:
+        return None
+    else:
+        return items.groupdict()
 
-    report = report.strip()
-    mobj = PATTERN.search(report)
-
-    if mobj is None:
-        raise ValueError('%s is not a valid metar.' % report)
-
-    mobj = mobj.groupdict()
-
-    # validate MET REPORT and TYPE
-    metreporttype = mobj['metreporttype']
-    metreporttype = metreporttype if metreporttype != '' else None
-
-    metreport = mobj['metreport']
-    if metreporttype in ('AUTO', ''):
-        metreport = metreport
-    elif metreporttype == 'NIL':
-        if metreport != '':
-            raise ValueError('%s provides both NIL and MET REPORT, only one expected.')
-        metreport = None
-
-    return {
-        'metartype': mobj['metartype'],
-        'station': mobj['station'],
-        'metreporttype': metreporttype if metreporttype != '' else None,
-        'metreport': metreport,
-    }
+def _parsetype(string):
+    pass

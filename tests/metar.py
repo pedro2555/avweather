@@ -26,30 +26,36 @@ from ddt import data
 from avweather import metar
 
 @ddt
-class MetarClassTests(unittest.TestCase):
-
-    @data(0, ('', ''))
-    def test_match_typeerror(self, report):
-        with self.assertRaises(TypeError):
-            metar.match(report)
+class MetarTests(unittest.TestCase):
 
     @data(
         '',
-        'METAR A000 010000Z NIL METREPORT',
+        'METAR A000',
+        'SPECI A000',
+        'METAR value'
     )
-    def test_match_valueerror(self, report):
-        with self.assertRaises(ValueError):
-            metar.match(report)
+    @unittest.expectedFailure
+    def test_parsetype(self, string):
+        test, tail = metar._parsetype(string)
+
+        if test is not None:
+            self.assertIn(test, ('METAR', 'SPECI'))
+        else:
+            self.assertEqual(string.strip(), tail)
 
     @data(
-        'METAR A000 010000Z METREPORT',
-        'METAR A000 010000Z AUTO METREPORT',
-        'METAR A000 010000Z NIL',
+        '',
     )
-    def test_match(self, report):
-        test = metar.match(report)
+    @unittest.expectedFailure
+    def test_parselocation(self, string):
+        test, tail = metar._parselocation(string)
 
-        # mandatory METAR items
-        self.assertIn(test['metartype'], ('METAR', 'METAR COR', 'SPECI'))
-        self.assertEqual(len(test['station']), 4)
-        self.assertIn(test['metreporttype'], ('NIL', 'AUTO', None))
+        if test is not None:
+            self.assertIsInstance(test, str)
+            self.assertEqual(len(test), 4)
+            self.assertTrue(test[0].isalpha())
+            for char in test[1:]:
+                self.assertTrue(char.isalpha() or char.isnumber())
+            self.assertEqual(test, test.upper())
+        else:
+            self.assertEqual(string.strip(), tail)
