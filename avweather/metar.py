@@ -31,7 +31,7 @@ def _research(pattern, string):
     if items is None:
         return None
     else:
-        return items.groupdict(), items.end()
+        return items.groupdict(), string[items.end():]
 
 TYPE_RE = _recompile(r"""
     (?P<type>METAR|SPECI)
@@ -64,3 +64,12 @@ def _parselocation(string):
         return location['location'], tail
 
     return None, tail
+
+def parse(string):
+    metartype, tail = _parsetype(string)
+    location, tail = _parselocation(tail)
+    return {
+        'type': metartype,
+        'location': location,
+        'unmatched': tail,
+    }

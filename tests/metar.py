@@ -29,6 +29,17 @@ from avweather import metar
 class MetarTests(unittest.TestCase):
 
     @data(
+        'METAR A000 ',
+        'METAR LPPT sdg'
+    )
+    def test_parse(self, string):
+        test = metar.parse(string)
+
+        self.assertIn('type', test)
+        self.assertIn('location', test)
+        self.assertIn('unmatched', test)
+
+    @data(
         '',
         'METAR A000',
         'SPECI A000',
@@ -39,6 +50,7 @@ class MetarTests(unittest.TestCase):
 
         if test is not None:
             self.assertIn(test, ('METAR', 'SPECI'))
+            self.assertNotEqual(tail, string.strip().upper())
         else:
             self.assertEqual(string.strip().upper(), tail)
 
