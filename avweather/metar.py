@@ -44,6 +44,10 @@ TIME_RE = _recompile(r"""
     (?P<time>[0-9]{6})Z
 """)
 
+REPORTTYPE_RE = _recompile(r"""
+    (?P<reporttype>AUTO|NIL)?
+""")
+
 def _parsetype(string):
     match = _research(TYPE_RE, string)
     if match is None:
@@ -86,13 +90,28 @@ def _parsetime(string):
 
     return None, tail
 
+def _parsereporttype(string):
+    match = _research(REPORTTYPE_RE, string)
+
+    if match is None:
+        return None, string
+
+    reporttype, tail = match
+
+    if 'reporttype' in reporttype:
+        return reporttype['reporttype'], tail
+
+    return None, tail
+
 def parse(string):
     metartype, tail = _parsetype(string.strip().upper())
     location, tail = _parselocation(tail)
     time, tail = _parsetime(tail)
+    reporttype = _parsereporttype(tail)
     return {
         'type': metartype,
         'location': location,
         'time': time,
+        'reporttype': reporttype,
         'unmatched': tail,
     }

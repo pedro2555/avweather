@@ -29,7 +29,9 @@ from avweather import metar
 class MetarTests(unittest.TestCase):
 
     @data(
-        'METAR A000 ',
+        'METAR A000',
+        'METAR A000 NIL',
+        'METAR LPPT AUTO sdg'
         'METAR LPPT sdg'
     )
     def test_parse(self, string):
@@ -39,6 +41,7 @@ class MetarTests(unittest.TestCase):
         self.assertIn('location', test)
         self.assertIn('unmatched', test)
         self.assertIn('time', test)
+        self.assertIn('reporttype', test)
 
     @data(
         '',
@@ -86,3 +89,18 @@ class MetarTests(unittest.TestCase):
             self.assertIsInstance(minute, int)
         else:
             self.assertEqual(string, tail)
+
+    @data(
+        '',
+        'afd',
+        'AUTO afd',
+        'NIL affvdf',
+    )
+    def test_parsereporttype(self, string):
+        test, tail = metar._parsereporttype(string)
+
+        if test is not None:
+            self.assertIn(test, ('AUTO', 'NIL'))
+        else:
+            self.assertEqual(string, tail)
+
