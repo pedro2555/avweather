@@ -43,9 +43,10 @@ class MetarTests(unittest.TestCase):
             self.assertEqual(string.strip().upper(), tail)
 
     @data(
-        '',
+        'A000',
+        'LPPT',
+        'KEWR'
     )
-    @unittest.expectedFailure
     def test_parselocation(self, string):
         test, tail = metar._parselocation(string)
 
@@ -54,7 +55,7 @@ class MetarTests(unittest.TestCase):
             self.assertEqual(len(test), 4)
             self.assertTrue(test[0].isalpha())
             for char in test[1:]:
-                self.assertTrue(char.isalpha() or char.isnumber())
+                self.assertTrue(char.isalpha() or char.isdigit())
             self.assertEqual(test, test.upper())
         else:
             self.assertEqual(string.strip(), tail)

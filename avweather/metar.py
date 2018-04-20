@@ -25,7 +25,8 @@ def _recompile(pattern):
     return re.compile(pattern, re.I | re.X)
 
 def _research(pattern, string):
-    items = pattern.search(string.strip().upper())
+    string = string.strip().upper()
+    items = pattern.search(string)
 
     if items is None:
         return None
@@ -34,6 +35,10 @@ def _research(pattern, string):
 
 TYPE_RE = _recompile(r"""
     (?P<type>METAR|SPECI)
+""")
+
+LOCATION_RE = _recompile(r"""
+    (?P<location>[A-Z][A-Z0-9]{3})
 """)
 
 def _parsetype(string):
@@ -45,5 +50,17 @@ def _parsetype(string):
 
     if 'type' in metartype:
         return metartype['type'], tail
+
+    return None, tail
+
+def _parselocation(string):
+    match = _research(LOCATION_RE, string)
+    if match is None:
+        return None, string
+
+    location, tail = match
+
+    if 'location' in location:
+        return location['location'], tail
 
     return None, tail
