@@ -34,14 +34,13 @@ class MetarTests(unittest.TestCase):
         'SPECI A000',
         'METAR value'
     )
-    @unittest.expectedFailure
     def test_parsetype(self, string):
         test, tail = metar._parsetype(string)
 
         if test is not None:
             self.assertIn(test, ('METAR', 'SPECI'))
         else:
-            self.assertEqual(string.strip(), tail)
+            self.assertEqual(string.strip().upper(), tail)
 
     @data(
         '',

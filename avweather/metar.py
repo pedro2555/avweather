@@ -22,16 +22,28 @@ along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 import re
 
 def _recompile(pattern):
-    print('^%s$' % ''.join(pattern))
-    return re.compile('^%s$' % r'\s'.join(pattern), re.I | re.X)
+    return re.compile(pattern, re.I | re.X)
 
 def _research(pattern, string):
-    items = pattern.search(string.strip())
+    items = pattern.search(string.strip().upper())
 
     if items is None:
         return None
     else:
-        return items.groupdict()
+        return items.groupdict(), items.end()
+
+TYPE_RE = _recompile(r"""
+    (?P<type>METAR|SPECI)
+""")
 
 def _parsetype(string):
-    pass
+    match = _research(TYPE_RE, string)
+    if match is None:
+        return None, string
+
+    metartype, tail = match
+
+    if 'type' in metartype:
+        return metartype['type'], tail
+
+    return None, tail
