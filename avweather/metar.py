@@ -122,7 +122,23 @@ def _parsewind(string):
 
     wind, tail = match
 
-    return (0, 0, None, 'KT', None, None), tail
+    if wind['gust'] is not None:
+        wind['gust'] = int(wind['gust'])
+
+    if wind['vrbfrom'] is not None:
+        wind['vrbfrom'] = int(wind['vrbfrom'])
+
+    if wind['vrbto'] is not None:
+        wind['vrbto'] = int(wind['vrbto'])
+
+    return (
+        int(wind['direction']),
+        int(wind['speed']),
+        wind['gust'],
+        wind['unit'],
+        wind['vrbfrom'],
+        wind['vrbto']
+    ), tail
 
 def parse(string):
     res = {}

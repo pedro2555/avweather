@@ -111,7 +111,9 @@ class MetarTests(unittest.TestCase):
             self.assertEqual(string, tail)
 
     @data(
-        ('METAR A000 NIL', 'NIL'),
+            ('NIL sfge', 'NIL'),
+            ('AUTO asdf', 'AUTO'),
+            ('sdf gre', None)
     )
     @unpack
     def test_parsereporttype_value(self, string, expected):
