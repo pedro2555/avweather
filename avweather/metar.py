@@ -25,7 +25,7 @@ def _recompile(pattern):
     return re.compile(pattern, re.I | re.X)
 
 def _research(pattern, string):
-    items = pattern.search(string)
+    items = pattern.search(string.strip())
 
     if items is None:
         return None
@@ -152,12 +152,14 @@ def parse(string):
 
     time, tail = _parsetime(tail)
     res['time'] = time
-
-    reporttype, tail = _parsereporttype(tail)
+    
+    m = _parsereporttype(tail)
+    print(m)
+    reporttype, tail = m
     res['reporttype'] = reporttype
 
     report = None
-    print(res)
+    print(reporttype)
     if reporttype != 'NIL':
         report = {}
         

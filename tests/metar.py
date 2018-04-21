@@ -30,8 +30,8 @@ from avweather import metar
 class MetarTests(unittest.TestCase):
 
     @data(
-        'METAR A000 NIL',
-        'METAR LPPT AUTO 00001KT CAVOK 03/M04 Q1013'
+        'METAR A000 010000Z NIL',
+        'METAR LPPT 010000Z AUTO 00001KT CAVOK 03/M04 Q1013'
     )
     def test_parse(self, string):
         test = metar.parse(string)
@@ -111,9 +111,9 @@ class MetarTests(unittest.TestCase):
             self.assertEqual(string, tail)
 
     @data(
-            ('NIL sfge', 'NIL'),
-            ('AUTO asdf', 'AUTO'),
-            ('sdf gre', None)
+        (' NIL sfge', 'NIL'),
+        ('AUTO asdf', 'AUTO'),
+        ('sdf gre', None)
     )
     @unpack
     def test_parsereporttype_value(self, string, expected):
