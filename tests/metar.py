@@ -22,6 +22,7 @@ along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
 from ddt import ddt
 from ddt import data
+from ddt import unpack
 
 from avweather import metar
 
@@ -29,19 +30,24 @@ from avweather import metar
 class MetarTests(unittest.TestCase):
 
     @data(
-        'METAR A000',
         'METAR A000 NIL',
-        'METAR LPPT AUTO sdg'
-        'METAR LPPT sdg'
+        'METAR LPPT AUTO 00001KT CAVOK 03/M04 Q1013'
     )
     def test_parse(self, string):
         test = metar.parse(string)
 
-        self.assertIn('type', test)
+        self.assertIn('metartype', test)
         self.assertIn('location', test)
-        self.assertIn('unmatched', test)
         self.assertIn('time', test)
         self.assertIn('reporttype', test)
+
+        self.assertIn('report', test)
+        report = test['report']
+        if test['reporttype'] == 'NIL':
+            self.assertEqual(report, None)
+        else:
+            self.assertIsInstance(report, dict)
+        self.assertIn('unmatched', test)
 
     @data(
         '',
@@ -104,3 +110,27 @@ class MetarTests(unittest.TestCase):
         else:
             self.assertEqual(string, tail)
 
+    @data(
+        ('METAR A000 NIL', 'NIL'),
+    )
+    @unpack
+    def test_parsereporttype_value(self, string, expected):
+        test, _ = metar._parsereporttype(string)
+        self.assertEqual(test, expected)
+
+    @data(
+        '01010KT',
+        '01010G20KT',
+        '01010KT 000V020',
+        '01010G20KT 000V020',
+    )
+    def test_parsewind(self, string):
+        test, tail = metar._parsewind(string)
+
+        direction, speed, gust, unit, vrbfrom, vrbto = test
+        self.assertIn(direction, (*range(359), 'VRB'))
+        self.assertIn(speed, range(999))
+        self.assertIn(gust, (*range(999), None))
+        self.assertIn(unit, ('KT', 'KMH'))
+        self.assertIn(vrbfrom, (*range(999), None))
+        self.assertIn(vrbto, (*range(999), None))

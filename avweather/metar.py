@@ -48,6 +48,17 @@ REPORTTYPE_RE = _recompile(r"""
     (?P<reporttype>AUTO|NIL)?
 """)
 
+WIND_RE = _recompile(r"""
+    (?P<direction>[0-9]{2}0|VRB)
+    P?(?P<speed>[0-9]{2,3})
+    (GP?(?P<gust>[0-9]{2,3}))?
+    (?P<unit>KT|KMH)
+    (\s(
+        (?P<vrbfrom>[0-9]{2}0)
+        V(?P<vrbto>[0-9]{2}0)
+    ))?
+""")
+
 def _parsetype(string):
     match = _research(TYPE_RE, string)
     if match is None:
@@ -103,15 +114,41 @@ def _parsereporttype(string):
 
     return None, tail
 
+def _parsewind(string):
+    match = _research(WIND_RE, string)
+
+    if match is None:
+        raise ValueError('Unable to find wind in METAR')
+
+    wind, tail = match
+
+    return (0, 0, None, 'KT', None, None), tail
+
 def parse(string):
+    res = {}
+    tail = None
+
     metartype, tail = _parsetype(string.strip().upper())
+    res['metartype'] = metartype
+
     location, tail = _parselocation(tail)
+    res['location'] = location
+
     time, tail = _parsetime(tail)
-    reporttype = _parsereporttype(tail)
-    return {
-        'type': metartype,
-        'location': location,
-        'time': time,
-        'reporttype': reporttype,
-        'unmatched': tail,
-    }
+    res['time'] = time
+
+    reporttype, tail = _parsereporttype(tail)
+    res['reporttype'] = reporttype
+
+    report = None
+    print(res)
+    if reporttype != 'NIL':
+        report = {}
+        
+        wind, tail = _parsewind(tail)
+        report['wind'] = wind
+
+    res['report'] = report
+    res['unmatched'] = tail if tail is not None else string
+
+    return res
