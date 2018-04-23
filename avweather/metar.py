@@ -68,6 +68,13 @@ VIS_RE = _recompile(r"""
     )?
 """)
 
+RVR_RE = _recompile(r"""
+    (
+        R(?P<rwy>[\d]{2}(L|C|R)?)
+        /(P|M)?(?P<rvr>[\d]{4})
+    )?
+""")
+
 SKY_RE = _recompile(r"""(?P<cavok>CAVOK)?""")
 
 def _parsetype(string):
@@ -170,6 +177,25 @@ def _parsevis(string):
         None if vis['mindist'] is None else int(vis['mindist']),
         None if vis['mindist'] is None else vis['mindistdir'].upper(),
     ), tail  
+
+def _parservr(string):
+    tail = string
+    result = {}
+    
+    while True:
+        match = _research(RVR_RE, tail)
+
+        if match is None:
+            break
+
+        rvr, tail = match
+        
+        if rvr['rwy'] is None or rvr['rvr'] is None:
+            break
+
+        result[rvr['rwy']] = int(rvr['rvr'])
+
+    return result, tail
 
 def parse(string):
     res = {}
