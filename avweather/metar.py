@@ -29,8 +29,8 @@ def _research(pattern, string):
 
     if items is None:
         return None
-    else:
-        return items.groupdict(), string[items.end():]
+
+    return items.groupdict(), string[items.end():]
 
 TYPE_RE = _recompile(r"""
     (?P<type>METAR|SPECI)
@@ -168,6 +168,10 @@ def _parsesky(string):
     if sky['cavok'] is not None:
         return None, tail
 
+    rvr, tail = _parservr(tail)
+
+    return (rvr,), tail
+
 def _parsevis(string):
     match = _research(VIS_RE, string)
 
@@ -178,12 +182,12 @@ def _parsevis(string):
         False if vis['ndv'] is None else True,
         None if vis['mindist'] is None else int(vis['mindist']),
         None if vis['mindist'] is None else vis['mindistdir'].upper(),
-    ), tail  
+    ), tail
 
 def _parservr(string):
     tail = string
     result = {}
-    
+
     while True:
         match = _research(RVR_RE, tail)
 
@@ -191,7 +195,7 @@ def _parservr(string):
             break
 
         rvr, tail = match
-        
+
         if rvr['rwy'] is None or rvr['rvr'] is None:
             break
 
@@ -206,6 +210,11 @@ def _parservr(string):
     return result, tail
 
 def parse(string):
+    """Parses a METAR or SPECI text report into python primitives.
+
+    Implementation based on Annex 3 to the Convetion on Internation Civil
+    Aviation, as published by ICAO, 16th Edition July 2007.
+    """
     res = {}
     tail = None
 
@@ -217,15 +226,14 @@ def parse(string):
 
     time, tail = _parsetime(tail)
     res['time'] = time
-    
-    m = _parsereporttype(tail)
-    reporttype, tail = m
+
+    reporttype, tail = _parsereporttype(tail)
     res['reporttype'] = reporttype
 
     report = None
     if reporttype != 'NIL':
         report = {}
-        
+
         wind, tail = _parsewind(tail)
         report['wind'] = wind
 
