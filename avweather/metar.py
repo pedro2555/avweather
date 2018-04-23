@@ -185,12 +185,10 @@ def parse(string):
     res['time'] = time
     
     m = _parsereporttype(tail)
-    print(m)
     reporttype, tail = m
     res['reporttype'] = reporttype
 
     report = None
-    print(reporttype)
     if reporttype != 'NIL':
         report = {}
         
