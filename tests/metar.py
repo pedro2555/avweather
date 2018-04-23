@@ -136,3 +136,34 @@ class MetarTests(unittest.TestCase):
         self.assertIn(unit, ('KT', 'KMH'))
         self.assertIn(vrbfrom, (*range(999), None))
         self.assertIn(vrbto, (*range(999), None))
+
+    @data(
+        ('CAVOK', None),
+    )
+    @unpack
+    def test_parsesky(self, string, expected):
+        test, tail = metar._parsesky(string)
+
+        self.assertEqual(test, expected)
+
+    @data(
+        '0350',
+        '0350NDV',
+        '0350 0200N',
+        '9000 1000NE',
+    )
+    def test_parsevis(self, string):
+        test, tail = metar._parsevis(string)
+
+        dist, ndv, mindist, mindistdir = test
+
+        self.assertIn(dist, range(9999))
+        self.assertIsInstance(ndv, bool)
+        self.assertIn(mindist, (*range(9999), None))
+        if mindist is None:
+            self.assertEqual(mindistdir, None)
+        else:
+            self.assertIn(
+                mindistdir,
+                ('N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'))
+

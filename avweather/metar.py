@@ -59,6 +59,17 @@ WIND_RE = _recompile(r"""
     ))?
 """)
 
+VIS_RE = _recompile(r"""
+    (?P<dist>[\d]{4})
+    (?P<ndv>NDV)?
+    (\s
+        (?P<mindist>[\d]{4})\s
+        (?P<mindistdir>N|NE|E|SE|S|SW|W|NW)
+    )?
+""")
+
+SKY_RE = _recompile(r"""(?P<cavok>CAVOK)?""")
+
 def _parsetype(string):
     match = _research(TYPE_RE, string)
     if match is None:
@@ -139,6 +150,26 @@ def _parsewind(string):
         wind['vrbfrom'],
         wind['vrbto']
     ), tail
+
+def _parsesky(string):
+    match = _research(SKY_RE, string)
+
+    sky, tail = match
+
+    if sky['cavok'] is not None:
+        return None, tail
+
+def _parsevis(string):
+    match = _research(VIS_RE, string)
+
+    vis, tail = match
+
+    return (
+        int(vis['dist']),
+        False if vis['ndv'] is None else True,
+        None if vis['mindist'] is None else int(vis['mindist']),
+        None if vis['mindist'] is None else vis['mindistdir'].upper(),
+    ), tail  
 
 def parse(string):
     res = {}
