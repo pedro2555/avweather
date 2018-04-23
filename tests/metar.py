@@ -167,3 +167,21 @@ class MetarTests(unittest.TestCase):
                 mindistdir,
                 ('N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'))
 
+    @data(
+        'R01/0250',
+        'R01L/0250 R01R/0100',
+        'R01/P0250',
+    )
+    def test_parservr(self, string):
+        test, tail = metar._parservr(string)
+
+        self.assertIsInstance(test, dict)
+        for rwy, rvr in test.items():
+            # this should always succeed in returning the rwy number part
+            self.assertIn(int(rwy[:2]), range(36))
+
+            if len(rwy) == 3:
+                self.assertIn(rwy[2], ('L', 'C', 'R'))
+
+            self.assertIsInstance(rvr, int)
+            self.assertIn(rvr, range(9999))
