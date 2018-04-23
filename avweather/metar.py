@@ -71,7 +71,9 @@ VIS_RE = _recompile(r"""
 RVR_RE = _recompile(r"""
     (
         R(?P<rwy>[\d]{2}(L|C|R)?)
-        /(P|M)?(?P<rvr>[\d]{4})
+        /(?P<rvrmod>P|M)?(?P<rvr>[\d]{4})
+        (V(?P<varmod>P|M)?(?P<var>[\d]{4}))?
+        (?P<tend>U|D|N)?
     )?
 """)
 
@@ -193,7 +195,13 @@ def _parservr(string):
         if rvr['rwy'] is None or rvr['rvr'] is None:
             break
 
-        result[rvr['rwy']] = int(rvr['rvr'])
+        result[rvr['rwy']] = (
+            int(rvr['rvr']),
+            rvr['rvrmod'],
+            int(rvr['var']) if rvr['var'] is not None else None,
+            rvr['varmod'],
+            rvr['tend'],
+        )
 
     return result, tail
 
