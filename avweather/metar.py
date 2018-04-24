@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 """
 import re
+from collections import namedtuple
 
 def _recompile(pattern):
     return re.compile(pattern, re.I | re.X)
@@ -128,6 +129,8 @@ def _parselocation(string):
     return None, tail
 
 def _parsetime(string):
+    MetarObsTime = namedtuple('MetarObsTime', 'day hour minute')
+
     match = _research(TIME_RE, string)
     if match is None:
         return None, string
@@ -141,7 +144,7 @@ def _parsetime(string):
         hour = int(time[2:4])
         minute = int(time[4:])
 
-        return (day, hour, minute), tail
+        return MetarObsTime(day, hour, minute), tail
 
     return None, tail
 
@@ -159,6 +162,7 @@ def _parsereporttype(string):
     return None, tail
 
 def _parsewind(string):
+    Wind = namedtuple('Wind', 'direction speed gust unit variable_from variable_to')
     match = _research(WIND_RE, string)
 
     if match is None:
@@ -175,13 +179,13 @@ def _parsewind(string):
     if wind['vrbto'] is not None:
         wind['vrbto'] = int(wind['vrbto'])
 
-    return (
+    return Wind(
         int(wind['direction']),
         int(wind['speed']),
         wind['gust'],
         wind['unit'],
         wind['vrbfrom'],
-        wind['vrbto']
+        wind['vrbto'],
     ), tail
 
 def _parsesky(string):
@@ -198,11 +202,12 @@ def _parsesky(string):
     return (vis, rvr), tail
 
 def _parsevis(string):
+    Visibility = namedtuple('Visibility', 'distance ndv min_distance min_direction')
     match = _research(VIS_RE, string)
 
     vis, tail = match
 
-    return (
+    return Visibility(
         int(vis['dist']),
         False if vis['ndv'] is None else True,
         None if vis['mindist'] is None else int(vis['mindist']),
@@ -210,6 +215,7 @@ def _parsevis(string):
     ), tail
 
 def _parservr(string):
+    Rvr = namedtuple('Rvr', 'distance modifier variation variation_modifier tendency')
     tail = string
     result = {}
 
@@ -224,7 +230,7 @@ def _parservr(string):
         if rvr['rwy'] is None or rvr['rvr'] is None:
             break
 
-        result[rvr['rwy']] = (
+        result[rvr['rwy']] = Rvr(
             int(rvr['rvr']),
             rvr['rvrmod'],
             int(rvr['var']) if rvr['var'] is not None else None,
@@ -235,6 +241,7 @@ def _parservr(string):
     return result, tail
 
 def _parsepercip(string):
+    Percipitation = namedtuple('Percipitation', 'intensity phenomena')
     tail = string
     intensity = ''
     phenomena = []
@@ -258,7 +265,7 @@ def _parsepercip(string):
     if len(phenomena) == 0:
         return None, tail
 
-    return (intensity, tuple(phenomena)), tail
+    return Percipitation(intensity, tuple(phenomena)), tail
 
 
 def parse(string):
