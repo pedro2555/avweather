@@ -1,2 +1,3 @@
 setuptools
 setuptools-lint
+ddt
