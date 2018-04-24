@@ -168,9 +168,10 @@ def _parsesky(string):
     if sky['cavok'] is not None:
         return None, tail
 
+    vis, tail = _parsevis(tail)
     rvr, tail = _parservr(tail)
 
-    return (rvr,), tail
+    return (vis, rvr), tail
 
 def _parsevis(string):
     match = _research(VIS_RE, string)
@@ -208,6 +209,9 @@ def _parservr(string):
         )
 
     return result, tail
+
+def _parsepercip(string):
+    return
 
 def parse(string):
     """Parses a METAR or SPECI text report into python primitives.

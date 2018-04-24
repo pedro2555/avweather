@@ -200,3 +200,39 @@ class MetarTests(unittest.TestCase):
         test, tail = metar._parservr(string)
 
         self.assertEqual(test, expected)
+
+    @data(
+        'RA',
+    )
+    def test_parsepercip(self, string):
+        test, tail = metar._parsepercip(string)
+
+        intensity, phenomena = test
+
+        self.assertIn(intensity, ('+', '-', ''))
+        self.assertIsInstance(phenomena, tuple)
+        self.assertTrue(len(phenomena) > 0)
+
+    @data(
+        (
+            '',
+            None
+        ),
+        (
+            'RA',
+            ('', ('RA', ))
+        ),
+        (
+            '-RA',
+            ('-', ('RA', ))
+        ),
+        (
+            '+RASN',
+            ('+', ('RA', 'SN'))
+        ),
+    )
+    @unpack
+    def test_parsepercip_value(self, string, expected):
+        test, tail = metar._parsepercip(string)
+
+        self.assertEqual(test, expected)
