@@ -79,6 +79,30 @@ RVR_RE = _recompile(r"""
 
 SKY_RE = _recompile(r"""(?P<cavok>CAVOK)?""")
 
+PERCIP_RE = _recompile(r"""
+    (
+        (?P<intensity>\+|-)?
+        (?P<phenomena>
+            DZ|RA|
+            SN|SG|
+            PL|DS|
+            SS|UP|
+            FZDZ|
+            FZRA|
+            FZUP|
+            SHGR|
+            SHGS|
+            SGRA|
+            SHSN|
+            TSGR|
+            TSGS|
+            TSPL|
+            TSRA|
+            TSSN
+        )
+    )?
+""")
+
 def _parsetype(string):
     match = _research(TYPE_RE, string)
     if match is None:
@@ -211,7 +235,31 @@ def _parservr(string):
     return result, tail
 
 def _parsepercip(string):
-    return
+    tail = string
+    intensity = ''
+    phenomena = []
+
+    while True:
+        match = _research(PERCIP_RE, tail)
+
+        if match is None:
+            break
+
+        percipitation, tail = match
+
+        if percipitation['phenomena'] is None:
+            break
+
+        if percipitation['intensity'] is not None:
+            intensity = percipitation['intensity']
+        
+        phenomena.append(percipitation['phenomena'])
+
+    if len(phenomena) == 0:
+        return None, tail
+
+    return (intensity, tuple(phenomena)), tail
+
 
 def parse(string):
     """Parses a METAR or SPECI text report into python primitives.
