@@ -236,3 +236,34 @@ class MetarTests(unittest.TestCase):
         test, tail = metar._parsepercip(string)
 
         self.assertEqual(test, expected)
+
+    @data(
+        ('', None),
+        ('ICFG', 2),
+        ('BLDUFG', 2),
+    )
+    @unpack
+    def test_parseobscuration(self, string, lenght):
+        test, tail = metar._parseobscuration(string)
+
+        if lenght is None:
+            self.assertEqual(test, None)
+        else:
+            self.assertIsInstance(test, tuple)
+            self.assertTrue(len(test) == lenght)
+    
+    @data(
+        ('', None),
+        ('FG', 1),
+        ('VCFG', 1),
+        ('BLSA', 1),
+    )
+    @unpack
+    def test_parseotherphenomena(self, string, lenght):
+        test, tail = metar._parseotherphenomena(string)
+
+        if lenght is None:
+            self.assertEqual(test, None)
+        else:
+            self.assertIsInstance(test, tuple)
+            self.assertTrue(len(test.phenomena) == lenght)

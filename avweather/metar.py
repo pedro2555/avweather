@@ -84,26 +84,27 @@ PERCIP_RE = _recompile(r"""
     (
         (?P<intensity>\+|-)?
         (?P<phenomena>
-            DZ|RA|
-            SN|SG|
-            PL|DS|
-            SS|UP|
-            FZDZ|
-            FZRA|
-            FZUP|
-            SHGR|
-            SHGS|
-            SGRA|
-            SHSN|
-            TSGR|
-            TSGS|
-            TSPL|
-            TSRA|
-            TSSN
+            DZ|RA|SN|SG|PL|DS|SS|FZDZ|FZRA|FZUP|SHGR|SHGS|SGRA|SHSN|TSGR|TSGS|
+            TSPL|TSRA|TSSN|UP
         )
     )?
 """)
 
+OBSCUR_RE = _recompile(r"""
+    (?P<obscuration>
+        IC|FG|BR|SA|DU|HZ|FU|VA|SQ|PO|FC|TS|BCFG|BLDU|BLSA|BLSN|DRDU|DRSA|
+        DRSN|FZFG|MIFG|PRFG
+    )?
+""")
+
+OTHERPHENOMENA_RE = _recompile(r"""
+    (
+        (?P<intensity>VC)?
+        (?P<phenomena>
+            FG|PO|FC|DS|SS|TS|SH|BLSN|BLSA|BLDU|VA
+        )
+    )?
+""")
 def _parsetype(string):
     match = _research(TYPE_RE, string)
     if match is None:
@@ -267,6 +268,54 @@ def _parsepercip(string):
 
     return Percipitation(intensity, tuple(phenomena)), tail
 
+def _parseobscuration(string):
+    tail = string
+    phenomena = []
+
+    while True:
+        match = _research(OBSCUR_RE, tail)
+
+        if match is None:
+            break
+
+        obscuration, tail = match
+
+        if obscuration['obscuration'] is None:
+            break
+
+        phenomena.append(obscuration['obscuration'])
+
+    if len(phenomena) == 0:
+        return None, tail
+
+    return tuple(phenomena), tail
+
+def _parseotherphenomena(string):
+    OtherPhenomena = namedtuple('OtherPhenomena', 'intensity phenomena')
+    tail = string
+    intensity = ''
+    phenomena = []
+
+    while True:
+        match = _research(OTHERPHENOMENA_RE, tail)
+
+        if match is None:
+            break
+
+        otherphenomena, tail = match
+
+        if otherphenomena['intensity'] is not None:
+            intensity = otherphenomena['intensity']
+
+        if otherphenomena['phenomena'] is None:
+            break
+
+        phenomena.append(otherphenomena['phenomena'])
+
+    if len(phenomena) == 0:
+        return None, tail
+
+    return OtherPhenomena(intensity, phenomena), tail
 
 def parse(string):
     """Parses a METAR or SPECI text report into python primitives.
