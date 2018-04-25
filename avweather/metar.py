@@ -34,7 +34,7 @@ def _research(pattern, string):
     return items.groupdict(), string[items.end():]
 
 TYPE_RE = _recompile(r"""
-    (?P<type>METAR|SPECI)
+    (?P<type>METAR|SPECI|METAR\sCOR|SPECI\sCOR)
 """)
 
 LOCATION_RE = _recompile(r"""
