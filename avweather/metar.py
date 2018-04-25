@@ -29,7 +29,7 @@ def _research(pattern, string):
     items = pattern.search(string.strip())
 
     if items is None:
-        return None
+        return (), string
 
     return items.groupdict(), string[items.end():]
 
@@ -107,9 +107,6 @@ OTHERPHENOMENA_RE = _recompile(r"""
 """)
 def _parsetype(string):
     match = _research(TYPE_RE, string)
-    if match is None:
-        return None, string
-
     metartype, tail = match
 
     if 'type' in metartype:
@@ -119,9 +116,6 @@ def _parsetype(string):
 
 def _parselocation(string):
     match = _research(LOCATION_RE, string)
-    if match is None:
-        return None, string
-
     location, tail = match
 
     if 'location' in location:
@@ -133,9 +127,6 @@ def _parsetime(string):
     MetarObsTime = namedtuple('MetarObsTime', 'day hour minute')
 
     match = _research(TIME_RE, string)
-    if match is None:
-        return None, string
-
     time, tail = match
 
     if 'time' in time:
@@ -151,9 +142,6 @@ def _parsetime(string):
 
 def _parsereporttype(string):
     match = _research(REPORTTYPE_RE, string)
-
-    if match is None:
-        return None, string
 
     reporttype, tail = match
 
@@ -223,9 +211,6 @@ def _parservr(string):
     while True:
         match = _research(RVR_RE, tail)
 
-        if match is None:
-            break
-
         rvr, tail = match
 
         if rvr['rwy'] is None or rvr['rvr'] is None:
@@ -250,9 +235,6 @@ def _parsepercip(string):
     while True:
         match = _research(PERCIP_RE, tail)
 
-        if match is None:
-            break
-
         percipitation, tail = match
 
         if percipitation['phenomena'] is None:
@@ -275,9 +257,6 @@ def _parseobscuration(string):
     while True:
         match = _research(OBSCUR_RE, tail)
 
-        if match is None:
-            break
-
         obscuration, tail = match
 
         if obscuration['obscuration'] is None:
@@ -298,9 +277,6 @@ def _parseotherphenomena(string):
 
     while True:
         match = _research(OTHERPHENOMENA_RE, tail)
-
-        if match is None:
-            break
 
         otherphenomena, tail = match
 
