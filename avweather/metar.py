@@ -21,9 +21,11 @@ along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 """
 import re
 from collections import namedtuple
+from functools import wraps
 
 def _search(regex):
     def search_decorator(parser_func):
+        @wraps(parser_func)
         def parser_func_wrapper(tail):
             result = []
             while True:
