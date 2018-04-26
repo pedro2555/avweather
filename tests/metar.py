@@ -176,8 +176,12 @@ class MetarTests(unittest.TestCase):
     def test_parservr(self, string):
         test, tail = metar._parservr(string)
 
-        self.assertIsInstance(test, dict)
-        for rwy, rvr_data in test.items():
+        self.assertIsInstance(test, tuple)
+
+        for rwy, rvr_data in test:
+            self.assertIsInstance(rwy, str)
+            self.assertIsInstance(rvr_data, tuple)
+
             # this should always succeed in returning the rwy number part
             self.assertIn(int(rwy[:2]), range(36))
 
@@ -190,15 +194,16 @@ class MetarTests(unittest.TestCase):
             self.assertIn(rvr, range(9999))
 
     @data(
-        ('R01/0250', {'01': (250, None, None, None, None)}),
-        ('R01/P0250', {'01': (250, 'P', None, None, None)}),
-        ('R01/0250V0500', {'01': (250, None, 500, None, None)}),
-        ('R01/M0250VP0500U', {'01': (250, 'M', 500, 'P', 'U')}),
+        ('R01/0250', ('01', (250, None, None, None, None))),
+        ('R01/P0250', ('01', (250, 'P', None, None, None))),
+        ('R01/0250V0500', ('01', (250, None, 500, None, None))),
+        ('R01/M0250VP0500U', ('01', (250, 'M', 500, 'P', 'U'))),
     )
     @unpack
     def test_parservr_value(self, string, expected):
         test, tail = metar._parservr(string)
 
+        test = test[0]
         self.assertEqual(test, expected)
 
     @data(

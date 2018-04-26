@@ -203,28 +203,50 @@ def _parsevis(string):
         None if vis['mindist'] is None else vis['mindistdir'].upper(),
     ), tail
 
-def _parservr(string):
+def _search(regex):
+    def search_decorator(parser_func):
+        def parser_func_wrapper(string):
+            result = []
+            tail = string
+            while True:
+                items = re.search(regex, tail.strip(), re.I | re.X)
+                if items is None:
+                    break
+                tail = tail[items.end():]
+
+                row = parser_func(items.groupdict())
+                if row is None:
+                    break
+                
+                result.append(row)
+
+            if len(result) == 0:
+                None, tail
+            return tuple(result), tail
+        return parser_func_wrapper   
+    return search_decorator
+
+@_search(r"""
+    (
+        R(?P<rwy>[\d]{2}(L|C|R)?)
+        /(?P<rvrmod>P|M)?(?P<rvr>[\d]{4})
+        (V(?P<varmod>P|M)?(?P<var>[\d]{4}))?
+        (?P<tend>U|D|N)?
+    )?
+""")
+def _parservr(rvr):
     Rvr = namedtuple('Rvr', 'distance modifier variation variation_modifier tendency')
-    tail = string
-    result = {}
 
-    while True:
-        match = _research(RVR_RE, tail)
+    if rvr['rwy'] is None or rvr['rvr'] is None:
+        return None
 
-        rvr, tail = match
-
-        if rvr['rwy'] is None or rvr['rvr'] is None:
-            break
-
-        result[rvr['rwy']] = Rvr(
-            int(rvr['rvr']),
-            rvr['rvrmod'],
-            int(rvr['var']) if rvr['var'] is not None else None,
-            rvr['varmod'],
-            rvr['tend'],
-        )
-
-    return result, tail
+    return rvr['rwy'], Rvr(
+        int(rvr['rvr']),
+        rvr['rvrmod'],
+        int(rvr['var']) if rvr['var'] is not None else None,
+        rvr['varmod'],
+        rvr['tend'],
+    )
 
 def _parsepercip(string):
     Percipitation = namedtuple('Percipitation', 'intensity phenomena')
