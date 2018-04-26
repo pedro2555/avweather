@@ -22,6 +22,29 @@ along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 import re
 from collections import namedtuple
 
+def _search(regex):
+    def search_decorator(parser_func):
+        def parser_func_wrapper(string):
+            result = []
+            tail = string
+            while True:
+                items = re.search(regex, tail.strip(), re.I | re.X)
+                if items is None:
+                    break
+                tail = tail[items.end():]
+
+                row = parser_func(items.groupdict())
+                if row is None:
+                    break
+                
+                result.append(row)
+
+            if len(result) == 0:
+                return None, tail
+            return tuple(result), tail
+        return parser_func_wrapper   
+    return search_decorator
+
 def _recompile(pattern):
     return re.compile(pattern, re.I | re.X)
 
@@ -87,13 +110,6 @@ PERCIP_RE = _recompile(r"""
             DZ|RA|SN|SG|PL|DS|SS|FZDZ|FZRA|FZUP|SHGR|SHGS|SGRA|SHSN|TSGR|TSGS|
             TSPL|TSRA|TSSN|UP
         )
-    )?
-""")
-
-OBSCUR_RE = _recompile(r"""
-    (?P<obscuration>
-        IC|FG|BR|SA|DU|HZ|FU|VA|SQ|PO|FC|TS|BCFG|BLDU|BLSA|BLSN|DRDU|DRSA|
-        DRSN|FZFG|MIFG|PRFG
     )?
 """)
 
@@ -203,28 +219,6 @@ def _parsevis(string):
         None if vis['mindist'] is None else vis['mindistdir'].upper(),
     ), tail
 
-def _search(regex):
-    def search_decorator(parser_func):
-        def parser_func_wrapper(string):
-            result = []
-            tail = string
-            while True:
-                items = re.search(regex, tail.strip(), re.I | re.X)
-                if items is None:
-                    break
-                tail = tail[items.end():]
-
-                row = parser_func(items.groupdict())
-                if row is None:
-                    break
-                
-                result.append(row)
-
-            if len(result) == 0:
-                None, tail
-            return tuple(result), tail
-        return parser_func_wrapper   
-    return search_decorator
 
 @_search(r"""
     (
@@ -272,24 +266,16 @@ def _parsepercip(string):
 
     return Percipitation(intensity, tuple(phenomena)), tail
 
-def _parseobscuration(string):
-    tail = string
-    phenomena = []
-
-    while True:
-        match = _research(OBSCUR_RE, tail)
-
-        obscuration, tail = match
-
-        if obscuration['obscuration'] is None:
-            break
-
-        phenomena.append(obscuration['obscuration'])
-
-    if len(phenomena) == 0:
-        return None, tail
-
-    return tuple(phenomena), tail
+@_search(r"""
+    (?P<obscuration>
+        IC|FG|BR|SA|DU|HZ|FU|VA|SQ|PO|FC|TS|BCFG|BLDU|BLSA|BLSN|DRDU|DRSA|
+        DRSN|FZFG|MIFG|PRFG
+    )?
+""")
+def _parseobscuration(obscuration):
+    if obscuration['obscuration'] is None:
+        return None
+    return obscuration['obscuration']
 
 def _parseotherphenomena(string):
     OtherPhenomena = namedtuple('OtherPhenomena', 'intensity phenomena')
