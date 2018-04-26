@@ -19,44 +19,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 """
-import re
 from collections import namedtuple
-
 from avweather.parsers import search, occurs
-
-def _recompile(pattern):
-    return re.compile(pattern, re.I | re.X)
-
-def _research(pattern, string):
-    items = pattern.search(string.strip())
-
-    if items is None:
-        return (), string
-
-    return items.groupdict(), string[items.end():]
-
-RVR_RE = _recompile(r"""
-    (
-        R(?P<rwy>[\d]{2}(L|C|R)?)
-        /(?P<rvrmod>P|M)?(?P<rvr>[\d]{4})
-        (V(?P<varmod>P|M)?(?P<var>[\d]{4}))?
-        (?P<tend>U|D|N)?
-    )?
-""")
-
-
-def _newsearch(regex):
-    def decorator(parse_func):
-
-        @wraps(parse_func)    
-        def parse_func_wrapper(tail):
-            match = re.search(regex, tail.strip(), re.I | re.X)
-            if match is None:
-                return None, tail
-            return parse_func(match.groupdict()), tail.strip()[match.end():]
-        
-        return parse_func_wrapper
-    return decorator
 
 @search(r"""
     (?P<type>METAR|SPECI|METAR\sCOR|SPECI\sCOR)
@@ -115,10 +79,9 @@ def _parsewind(wind):
         wind['vrbto'],
     )
 
-
 def _parsesky(string):
 
-    @search('(?P<cavok>CAVOK)?')
+    @search(r'(?P<cavok>CAVOK)?')
     def parsecavok(item):
         return item['cavok']
 
@@ -171,7 +134,7 @@ def _parservr(rvr):
     )
 
 
-@search('(?P<intensity>\+|-)?')
+@search(r'(?P<intensity>\+|-)?')
 def _parseintensity(item):
     return item['intensity']
 
