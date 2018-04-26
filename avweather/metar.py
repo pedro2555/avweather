@@ -57,42 +57,6 @@ def _research(pattern, string):
 
     return items.groupdict(), string[items.end():]
 
-TYPE_RE = _recompile(r"""
-    (?P<type>METAR|SPECI|METAR\sCOR|SPECI\sCOR)
-""")
-
-LOCATION_RE = _recompile(r"""
-    (?P<location>[A-Z][A-Z0-9]{3})
-""")
-
-TIME_RE = _recompile(r"""
-    (?P<time>[0-9]{6})Z
-""")
-
-REPORTTYPE_RE = _recompile(r"""
-    (?P<reporttype>AUTO|NIL)?
-""")
-
-WIND_RE = _recompile(r"""
-    (?P<direction>[0-9]{2}0|VRB)
-    P?(?P<speed>[0-9]{2,3})
-    (GP?(?P<gust>[0-9]{2,3}))?
-    (?P<unit>KT|KMH)
-    (\s(
-        (?P<vrbfrom>[0-9]{2}0)
-        V(?P<vrbto>[0-9]{2}0)
-    ))?
-""")
-
-VIS_RE = _recompile(r"""
-    (?P<dist>[\d]{4})
-    (?P<ndv>NDV)?
-    (\s
-        (?P<mindist>[\d]{4})\s
-        (?P<mindistdir>N|NE|E|SE|S|SW|W|NW)
-    )?
-""")
-
 RVR_RE = _recompile(r"""
     (
         R(?P<rwy>[\d]{2}(L|C|R)?)
@@ -122,69 +86,68 @@ OTHERPHENOMENA_RE = _recompile(r"""
         )
     )?
 """)
-def _parsetype(string):
-    match = _research(TYPE_RE, string)
-    metartype, tail = match
 
-    if 'type' in metartype:
-        return metartype['type'], tail
+def _newsearch(regex):
+    def decorator(parse_func):
 
-    return None, tail
+        @wraps(parse_func)    
+        def parse_func_wrapper(tail):
+            match = re.search(regex, tail.strip(), re.I | re.X)
+            if match is None:
+                return None, tail
+            return parse_func(match.groupdict()), tail.strip()[match.end():]
+        
+        return parse_func_wrapper
+    return decorator
 
-def _parselocation(string):
-    match = _research(LOCATION_RE, string)
-    location, tail = match
+@_newsearch(r"""
+    (?P<type>METAR|SPECI|METAR\sCOR|SPECI\sCOR)
+""")
+def _parsetype(metartype):
+    return metartype['type']
 
-    if 'location' in location:
-        return location['location'], tail
+@_newsearch(r"""
+    (?P<location>[A-Z][A-Z0-9]{3})
+""")
+def _parselocation(location):
+    return location['location']
 
-    return None, tail
-
-def _parsetime(string):
+@_newsearch(r"""
+    (?P<time>[0-9]{6})Z
+""")
+def _parsetime(time):
     MetarObsTime = namedtuple('MetarObsTime', 'day hour minute')
+    time = time['time']
+    day = int(time[:2])
+    hour = int(time[2:4])
+    minute = int(time[4:])
 
-    match = _research(TIME_RE, string)
-    time, tail = match
+    return MetarObsTime(day, hour, minute)
 
-    if 'time' in time:
-        time = time['time']
+@_newsearch(r"""
+    (?P<reporttype>AUTO|NIL)?
+""")
+def _parsereporttype(reporttype):
+    return reporttype['reporttype']
 
-        day = int(time[:2])
-        hour = int(time[2:4])
-        minute = int(time[4:])
-
-        return MetarObsTime(day, hour, minute), tail
-
-    return None, tail
-
-def _parsereporttype(string):
-    match = _research(REPORTTYPE_RE, string)
-
-    reporttype, tail = match
-
-    if 'reporttype' in reporttype:
-        return reporttype['reporttype'], tail
-
-    return None, tail
-
-def _parsewind(string):
+@_newsearch(r"""
+    (?P<direction>[0-9]{2}0|VRB)
+    P?(?P<speed>[0-9]{2,3})
+    (GP?(?P<gust>[0-9]{2,3}))?
+    (?P<unit>KT|KMH)
+    (\s(
+        (?P<vrbfrom>[0-9]{2}0)
+        V(?P<vrbto>[0-9]{2}0)
+    ))?
+""")
+def _parsewind(wind):
     Wind = namedtuple('Wind', 'direction speed gust unit variable_from variable_to')
-    match = _research(WIND_RE, string)
-
-    if match is None:
-        raise ValueError('Unable to find wind in METAR')
-
-    wind, tail = match
-
     if wind['gust'] is not None:
         wind['gust'] = int(wind['gust'])
-
     if wind['vrbfrom'] is not None:
         wind['vrbfrom'] = int(wind['vrbfrom'])
-
     if wind['vrbto'] is not None:
         wind['vrbto'] = int(wind['vrbto'])
-
     return Wind(
         int(wind['direction']),
         int(wind['speed']),
@@ -192,7 +155,7 @@ def _parsewind(string):
         wind['unit'],
         wind['vrbfrom'],
         wind['vrbto'],
-    ), tail
+    )
 
 def _parsesky(string):
     match = _research(SKY_RE, string)
@@ -207,18 +170,22 @@ def _parsesky(string):
 
     return (vis, rvr), tail
 
-def _parsevis(string):
+@_newsearch(r"""
+    (?P<dist>[\d]{4})
+    (?P<ndv>NDV)?
+    (\s
+        (?P<mindist>[\d]{4})\s
+        (?P<mindistdir>N|NE|E|SE|S|SW|W|NW)
+    )?
+""")
+def _parsevis(vis):
     Visibility = namedtuple('Visibility', 'distance ndv min_distance min_direction')
-    match = _research(VIS_RE, string)
-
-    vis, tail = match
-
     return Visibility(
         int(vis['dist']),
         False if vis['ndv'] is None else True,
         None if vis['mindist'] is None else int(vis['mindist']),
         None if vis['mindist'] is None else vis['mindistdir'].upper(),
-    ), tail
+    )
 
 
 @_search(r"""
@@ -231,10 +198,8 @@ def _parsevis(string):
 """)
 def _parservr(rvr):
     Rvr = namedtuple('Rvr', 'distance modifier variation variation_modifier tendency')
-
-    if rvr['rwy'] is None or rvr['rvr'] is None:
+    if None in (rvr['rwy'], rvr['rvr']):
         return None
-
     return rvr['rwy'], Rvr(
         int(rvr['rvr']),
         rvr['rvrmod'],
