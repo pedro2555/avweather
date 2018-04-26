@@ -168,7 +168,6 @@ class MetarTests(unittest.TestCase):
                 ('N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'))
 
     @data(
-        '10/10 ',
         'R01/0250',
         'R01L/0250 R01R/0100',
         'R01/P0250',
