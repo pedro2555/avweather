@@ -44,17 +44,6 @@ RVR_RE = _recompile(r"""
     )?
 """)
 
-SKY_RE = _recompile(r"""(?P<cavok>CAVOK)?""")
-
-PERCIP_RE = _recompile(r"""
-    (
-        (?P<intensity>\+|-)?
-        (?P<phenomena>
-            DZ|RA|SN|SG|PL|DS|SS|FZDZ|FZRA|FZUP|SHGR|SHGS|SGRA|SHSN|TSGR|TSGS|
-            TSPL|TSRA|TSSN|UP
-        )
-    )?
-""")
 
 OTHERPHENOMENA_RE = _recompile(r"""
     (
@@ -135,6 +124,8 @@ def _parsewind(wind):
         wind['vrbto'],
     )
 
+
+SKY_RE = _recompile('(?P<cavok>CAVOK)?')
 def _parsesky(string):
     match = _research(SKY_RE, string)
 
@@ -186,29 +177,30 @@ def _parservr(rvr):
         rvr['tend'],
     )
 
+
+@search('(?P<intensity>\+|-)?')
+def _parseintensity(item):
+    return item['intensity']
+
 def _parsepercip(string):
     Percipitation = namedtuple('Percipitation', 'intensity phenomena')
-    tail = string
-    intensity = ''
-    phenomena = []
 
-    while True:
-        match = _research(PERCIP_RE, tail)
+    @occurs(10)
+    @search(r"""(?P<phenomena>
+        DZ|RA|SN|SG|PL|DS|SS|FZDZ|FZRA|FZUP|SHGR|SHGS|SGRA|SHSN|TSGR|TSGS|TSPL|
+        TSRA|TSSN|UP
+    )""")
+    def parsephenomena(item):
+        return item['phenomena']
 
-        percipitation, tail = match
-
-        if percipitation['phenomena'] is None:
-            break
-
-        if percipitation['intensity'] is not None:
-            intensity = percipitation['intensity']
-        
-        phenomena.append(percipitation['phenomena'])
+    intensity, tail = _parseintensity(string)
+    if intensity is None:
+        intensity = ''
+    phenomena, tail = parsephenomena(tail)
 
     if len(phenomena) == 0:
         return None, tail
-
-    return Percipitation(intensity, tuple(phenomena)), tail
+    return Percipitation(intensity, phenomena), tail
 
 @occurs(10)
 @search(r"""
