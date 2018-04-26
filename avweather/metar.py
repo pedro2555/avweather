@@ -116,13 +116,15 @@ def _parsewind(wind):
     )
 
 
-SKY_RE = _recompile('(?P<cavok>CAVOK)?')
 def _parsesky(string):
-    match = _research(SKY_RE, string)
 
-    sky, tail = match
+    @search('(?P<cavok>CAVOK)?')
+    def parsecavok(item):
+        return item['cavok']
 
-    if sky['cavok'] is not None:
+    cavok, tail = parsecavok(string)
+
+    if cavok is not None:
         return None, tail
 
     vis, tail = _parsevis(tail)
