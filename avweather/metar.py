@@ -45,15 +45,6 @@ RVR_RE = _recompile(r"""
 """)
 
 
-OTHERPHENOMENA_RE = _recompile(r"""
-    (
-        (?P<intensity>VC)?
-        (?P<phenomena>
-            FG|PO|FC|DS|SS|TS|SH|BLSN|BLSA|BLDU|VA
-        )
-    )?
-""")
-
 def _newsearch(regex):
     def decorator(parse_func):
 
@@ -214,22 +205,16 @@ def _parseobscuration(obscuration):
 
 def _parseotherphenomena(string):
     OtherPhenomena = namedtuple('OtherPhenomena', 'intensity phenomena')
-    tail = string
-    intensity = ''
-    phenomena = []
+    
+    @occurs(10)
+    @search(r"""(?P<phenomena>
+        FG|PO|FC|DS|SS|TS|SH|BLSN|BLSA|BLDU|VA
+    )""")
+    def parsephenomena(item):
+        return item['phenomena']
 
-    while True:
-        match = _research(OTHERPHENOMENA_RE, tail)
-
-        otherphenomena, tail = match
-
-        if otherphenomena['intensity'] is not None:
-            intensity = otherphenomena['intensity']
-
-        if otherphenomena['phenomena'] is None:
-            break
-
-        phenomena.append(otherphenomena['phenomena'])
+    intensity, tail = _parseintensity(string)
+    phenomena, tail = parsephenomena(tail)
 
     if len(phenomena) == 0:
         return None, tail
