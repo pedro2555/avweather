@@ -24,9 +24,8 @@ from collections import namedtuple
 
 def _search(regex):
     def search_decorator(parser_func):
-        def parser_func_wrapper(string):
+        def parser_func_wrapper(tail):
             result = []
-            tail = string
             while True:
                 items = re.search(regex, tail.strip(), re.I | re.X)
                 if items is None:
@@ -273,8 +272,6 @@ def _parsepercip(string):
     )?
 """)
 def _parseobscuration(obscuration):
-    if obscuration['obscuration'] is None:
-        return None
     return obscuration['obscuration']
 
 def _parseotherphenomena(string):
