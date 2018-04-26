@@ -242,7 +242,7 @@ class MetarTests(unittest.TestCase):
         self.assertEqual(test, expected)
 
     @data(
-        ('', None),
+        ('', 0),
         ('ICFG', 2),
         ('BLDUFG', 2),
     )
@@ -250,11 +250,8 @@ class MetarTests(unittest.TestCase):
     def test_parseobscuration(self, string, lenght):
         test, tail = metar._parseobscuration(string)
 
-        if lenght is None:
-            self.assertEqual(test, None)
-        else:
-            self.assertIsInstance(test, tuple)
-            self.assertTrue(len(test) == lenght)
+        self.assertIsInstance(test, tuple)
+        self.assertTrue(len(test) == lenght)
     
     @data(
         ('', None),

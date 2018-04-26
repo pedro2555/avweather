@@ -21,30 +21,8 @@ along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 """
 import re
 from collections import namedtuple
-from functools import wraps
 
-def _search(regex):
-    def search_decorator(parser_func):
-        @wraps(parser_func)
-        def parser_func_wrapper(tail):
-            result = []
-            while True:
-                items = re.search(regex, tail.strip(), re.I | re.X)
-                if items is None:
-                    break
-                tail = tail[items.end():]
-
-                row = parser_func(items.groupdict())
-                if row is None:
-                    break
-                
-                result.append(row)
-
-            if len(result) == 0:
-                return None, tail
-            return tuple(result), tail
-        return parser_func_wrapper   
-    return search_decorator
+from avweather.parsers import search, occurs
 
 def _recompile(pattern):
     return re.compile(pattern, re.I | re.X)
@@ -100,19 +78,19 @@ def _newsearch(regex):
         return parse_func_wrapper
     return decorator
 
-@_newsearch(r"""
+@search(r"""
     (?P<type>METAR|SPECI|METAR\sCOR|SPECI\sCOR)
 """)
 def _parsetype(metartype):
     return metartype['type']
 
-@_newsearch(r"""
+@search(r"""
     (?P<location>[A-Z][A-Z0-9]{3})
 """)
 def _parselocation(location):
     return location['location']
 
-@_newsearch(r"""
+@search(r"""
     (?P<time>[0-9]{6})Z
 """)
 def _parsetime(time):
@@ -124,13 +102,13 @@ def _parsetime(time):
 
     return MetarObsTime(day, hour, minute)
 
-@_newsearch(r"""
+@search(r"""
     (?P<reporttype>AUTO|NIL)?
 """)
 def _parsereporttype(reporttype):
     return reporttype['reporttype']
 
-@_newsearch(r"""
+@search(r"""
     (?P<direction>[0-9]{2}0|VRB)
     P?(?P<speed>[0-9]{2,3})
     (GP?(?P<gust>[0-9]{2,3}))?
@@ -170,7 +148,7 @@ def _parsesky(string):
 
     return (vis, rvr), tail
 
-@_newsearch(r"""
+@search(r"""
     (?P<dist>[\d]{4})
     (?P<ndv>NDV)?
     (\s
@@ -187,8 +165,8 @@ def _parsevis(vis):
         None if vis['mindist'] is None else vis['mindistdir'].upper(),
     )
 
-
-@_search(r"""
+@occurs(10)
+@search(r"""
     (
         R(?P<rwy>[\d]{2}(L|C|R)?)
         /(?P<rvrmod>P|M)?(?P<rvr>[\d]{4})
@@ -232,7 +210,8 @@ def _parsepercip(string):
 
     return Percipitation(intensity, tuple(phenomena)), tail
 
-@_search(r"""
+@occurs(10)
+@search(r"""
     (?P<obscuration>
         IC|FG|BR|SA|DU|HZ|FU|VA|SQ|PO|FC|TS|BCFG|BLDU|BLSA|BLSN|DRDU|DRSA|
         DRSN|FZFG|MIFG|PRFG
