@@ -33,21 +33,11 @@ class MetarTests(unittest.TestCase):
         'METAR A000 010000Z NIL',
         'METAR LPPT 010000Z AUTO 00001KT CAVOK 03/M04 Q1013'
     )
+    @unittest.expectedFailure
     def test_parse(self, string):
         test = metar.parse(string)
 
-        self.assertIn('metartype', test)
-        self.assertIn('location', test)
-        self.assertIn('time', test)
-        self.assertIn('reporttype', test)
-
-        self.assertIn('report', test)
-        report = test['report']
-        if test['reporttype'] == 'NIL':
-            self.assertEqual(report, None)
-        else:
-            self.assertIsInstance(report, dict)
-        self.assertIn('unmatched', test)
+        self.assertEqual(test.unmatched, '')
 
     @data(
         '',

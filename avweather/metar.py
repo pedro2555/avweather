@@ -92,24 +92,30 @@ def _parsesky(string):
 
     vis, tail = _parsevis(tail)
     rvr, tail = _parservr(tail)
+    sky, tail = _parsesky(tail)
 
-    return (vis, rvr), tail
+    return (vis, rvr, sky), tail
 
 @search(r"""
-    (?P<dist>[\d]{4})
+    (?P<distance>[\d]{4})
     (?P<ndv>NDV)?
     (\s
-        (?P<mindist>[\d]{4})\s
-        (?P<mindistdir>N|NE|E|SE|S|SW|W|NW)
+        (?P<min_distance>[\d]{4})\s
+        (?P<min_direction>N|NE|E|SE|S|SW|W|NW)
     )?
 """)
-def _parsevis(vis):
+def _parsevis(item):
     Visibility = namedtuple('Visibility', 'distance ndv min_distance min_direction')
+    
+    ndv = item['ndv'] is not None
+    min_distance = item['min_distance']
+    if min_distance is not None:
+        min_distance = int(min_distance)
     return Visibility(
-        int(vis['dist']),
-        False if vis['ndv'] is None else True,
-        None if vis['mindist'] is None else int(vis['mindist']),
-        None if vis['mindist'] is None else vis['mindistdir'].upper(),
+        int(item['distance']),
+        ndv,
+        min_distance,
+        item['min_direction'],
     )
 
 @occurs(10)
@@ -232,29 +238,20 @@ def parse(string):
     Implementation based on Annex 3 to the Convetion on Internation Civil
     Aviation, as published by ICAO, 16th Edition July 2007.
     """
-    res = {}
-    tail = None
-
-    metartype, tail = _parsetype(string.strip().upper())
-    res['metartype'] = metartype
-
-    location, tail = _parselocation(tail)
-    res['location'] = location
-
-    time, tail = _parsetime(tail)
-    res['time'] = time
-
-    reporttype, tail = _parsereporttype(tail)
-    res['reporttype'] = reporttype
-
+    Metar = namedtuple('Metar',
+                       'metartype location time reporttype report unmatched')
+    Report = namedtuple('Report', 'wind sky')
+    
+    metartype, string = _parsetype(string.strip().upper())
+    location, string = _parselocation(string)
+    time, string = _parsetime(string)
+    reporttype, string = _parsereporttype(string)
+    
     report = None
     if reporttype != 'NIL':
-        report = {}
+        wind, string = _parsewind(string)
+        sky, string = _parsesky(string)
+        
+        report = Report(wind, sky)
 
-        wind, tail = _parsewind(tail)
-        report['wind'] = wind
-
-    res['report'] = report
-    res['unmatched'] = tail if tail is not None else string
-
-    return res
+    return Metar(metartype, location, time, reporttype, report, string)
