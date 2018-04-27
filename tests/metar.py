@@ -31,12 +31,16 @@ class MetarTests(unittest.TestCase):
 
     @data(
         'METAR A000 010000Z NIL',
-        'METAR LPPT 010000Z AUTO 00001KT CAVOK 03/M04 Q1013'
+        'METAR LPPT 010000Z AUTO 00001KT CAVOK 03/M04 Q1013',
+        'METAR LPPT 270130Z 34012KT 9999 FEW011 12/10 Q1013',
     )
-    @unittest.expectedFailure
     def test_parse(self, string):
         test = metar.parse(string)
-
+        
+        if test.reporttype != 'NIL':
+            self.assertEqual(test.report.pressure, 1013)
+        else:
+            self.assertIs(test.report, None)
         self.assertEqual(test.unmatched, '')
 
     @data(
@@ -138,6 +142,7 @@ class MetarTests(unittest.TestCase):
 
     @data(
         '0350',
+        '9999',
         '0350NDV',
         '0350 0200N',
         '9000 1000NE',
@@ -147,9 +152,9 @@ class MetarTests(unittest.TestCase):
 
         dist, ndv, mindist, mindistdir = test
 
-        self.assertIn(dist, range(9999))
+        self.assertIn(dist, range(10000))
         self.assertIsInstance(ndv, bool)
-        self.assertIn(mindist, (*range(9999), None))
+        self.assertIn(mindist, (*range(10000), None))
         if mindist is None:
             self.assertEqual(mindistdir, None)
         else:
@@ -261,6 +266,7 @@ class MetarTests(unittest.TestCase):
     
     @data(
         'OVC014',
+        'FEW011',
         'FEW014 BKN025CB',
     )
     def test_parseclouds(self, string):
@@ -287,3 +293,7 @@ class MetarTests(unittest.TestCase):
         test, _ = metar._parsecloudsvv(string)
 
         self.assertIn(test, ('SKC', 'NSC', 'NCD'))
+
+    @data('FEW011')
+    def test_parseskyconditions(self, string):
+        test, _ = metar._parsecloudsvv(string)

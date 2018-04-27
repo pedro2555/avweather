@@ -80,21 +80,29 @@ def _parsewind(wind):
     )
 
 def _parsesky(string):
+    SkyConditions = namedtuple('SkyConditions', 'visibility rvr weather clouds')
 
     @search(r'(?P<cavok>CAVOK)?')
     def parsecavok(item):
         return item['cavok']
 
-    cavok, tail = parsecavok(string)
+    cavok, string = parsecavok(string)
 
     if cavok is not None:
-        return None, tail
+        return None, string
 
-    vis, tail = _parsevis(tail)
-    rvr, tail = _parservr(tail)
-    sky, tail = _parsesky(tail)
+    visibility, string = _parsevis(string)
+    rvr, string = _parservr(string)
 
-    return (vis, rvr, sky), tail
+    Weather = namedtuple('Weather', 'precipitation obscuration other')
+    precipitation, string = _parsepercip(string)
+    obscuration, string = _parseobscuration(string)
+    other, string = _parseotherphenomena(string)
+    current_weather = Weather(precipitation, obscuration, other)
+
+    clouds, string = _parsecloudsvv(string)
+
+    return SkyConditions(visibility, rvr, current_weather, clouds), string
 
 @search(r"""
     (?P<distance>[\d]{4})
@@ -226,11 +234,32 @@ def _parsecloudsvv(string):
     def parseskyclear(item):
         return item['skyclear']
     skyclear, tail = parseskyclear(string)
-    print('------ %s' % skyclear)
     if skyclear is None:
-        raise ArgumentError('expected cavok, clouds, vertical visibility, or \
+        raise AttributeError('expected cavok, clouds, vertical visibility, or \
 sky clear indication, got neither')
     return skyclear, tail
+
+@search(r"""
+    (?P<air_signal>M)?
+    (?P<air>[\d]{2})/
+    (?P<dewpoint_signal>M)?
+    (?P<dewpoint>[\d]{2})
+""")
+def _parsetemperature(item):
+    Temperature = namedtuple('Temperature', 'air dewpoint')
+
+    air = int(item['air'])
+    if item['air_signal'] is not None:
+        air = 0 - air
+    dewpoint = int(item['dewpoint'])
+    if item['dewpoint_signal'] is not None:
+        dewpoint = 0 - dewpoint
+
+    return Temperature(air, dewpoint)
+
+@search(r'Q(?P<pressure>[\d]{4})')
+def _parsepressure(item):
+    return int(item['pressure'])
 
 def parse(string):
     """Parses a METAR or SPECI text report into python primitives.
@@ -240,7 +269,7 @@ def parse(string):
     """
     Metar = namedtuple('Metar',
                        'metartype location time reporttype report unmatched')
-    Report = namedtuple('Report', 'wind sky')
+    Report = namedtuple('Report', 'wind sky temperature pressure remarks')
     
     metartype, string = _parsetype(string.strip().upper())
     location, string = _parselocation(string)
@@ -251,7 +280,9 @@ def parse(string):
     if reporttype != 'NIL':
         wind, string = _parsewind(string)
         sky, string = _parsesky(string)
-        
-        report = Report(wind, sky)
+        temperature, string = _parsetemperature(string)
+        pressure, string = _parsepressure(string)
+
+        report = Report(wind, sky, temperature, pressure, None)
 
     return Metar(metartype, location, time, reporttype, report, string)
