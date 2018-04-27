@@ -268,3 +268,19 @@ class MetarTests(unittest.TestCase):
         else:
             self.assertIsInstance(test, tuple)
             self.assertTrue(len(test.phenomena) == lenght)
+    
+    @data(
+        'OVC014',
+        'FEW014 BKN025CB',
+    )
+    def test_parseclouds(self, string):
+        test, tail = metar._parsecloudsvv(string)
+
+        self.assertIsInstance(test, tuple)
+        self.assertTrue(len(test) > 0)
+        self.assertTrue(len(test) <= 4)
+        for cloud in test:
+            self.assertIn(cloud.amount, ('FEW', 'SCT', 'BKN', 'OVC'))
+            if cloud.height > 0:
+                self.assertIsInstance(cloud.height, int)
+            self.assertIn(cloud.type, ('CB', 'TCU', '///', None))

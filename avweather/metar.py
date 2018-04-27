@@ -185,6 +185,45 @@ def _parseotherphenomena(string):
 
     return OtherPhenomena(intensity, phenomena), tail
 
+def _parsecloudsvv(string):
+    @occurs(4)
+    @search(r"""
+        (?P<amount>FEW|SCT|BKN|OVC)
+        (?P<height>[\d]{3}|///)
+        (?P<type>CB|TCU|///)?
+    """)
+    def parseclouds(item):
+        Cloud = namedtuple('Cloud', 'amount height type')
+        height = item['height']
+        if height == '///':
+            height = -1
+        else:
+            height = int(height)
+        return Cloud(item['amount'], height, item['type'])
+    clouds, tail = parseclouds(string)
+    if len(clouds) > 0:
+        return clouds, tail
+
+    @search(r"""
+        VV(?P<verticalvis>[\d]{3}|///)
+    """)
+    def parseverticalvis(item):
+        verticalvis = item['verticalvis']
+        if verticalvis == '///':
+            return -1
+        return int(verticalvis)
+    verticalvis, tail = parseverticalvis(string)
+    return verticalvis, tail
+
+    @search(r'(?<skyclear>SKC|NSC|NCD)')
+    def parseskyclear(item):
+        return item['skyclear']
+    skyclear, tail = parseskyclear(string)
+    if skyclear is None:
+        raise ArgumentError('expected cavok, clouds, vertical visibility, or \
+sky clear indication, got neither')
+    return skyclear, tail
+
 def parse(string):
     """Parses a METAR or SPECI text report into python primitives.
 
