@@ -213,12 +213,14 @@ def _parsecloudsvv(string):
             return -1
         return int(verticalvis)
     verticalvis, tail = parseverticalvis(string)
-    return verticalvis, tail
+    if verticalvis is not None:
+        return verticalvis, tail
 
-    @search(r'(?<skyclear>SKC|NSC|NCD)')
+    @search(r'(?P<skyclear>SKC|NSC|NCD)')
     def parseskyclear(item):
         return item['skyclear']
     skyclear, tail = parseskyclear(string)
+    print('------ %s' % skyclear)
     if skyclear is None:
         raise ArgumentError('expected cavok, clouds, vertical visibility, or \
 sky clear indication, got neither')

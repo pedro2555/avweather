@@ -274,7 +274,7 @@ class MetarTests(unittest.TestCase):
         'FEW014 BKN025CB',
     )
     def test_parseclouds(self, string):
-        test, tail = metar._parsecloudsvv(string)
+        test, _ = metar._parsecloudsvv(string)
 
         self.assertIsInstance(test, tuple)
         self.assertTrue(len(test) > 0)
@@ -284,3 +284,16 @@ class MetarTests(unittest.TestCase):
             if cloud.height > 0:
                 self.assertIsInstance(cloud.height, int)
             self.assertIn(cloud.type, ('CB', 'TCU', '///', None))
+
+    @data('VV010', 'VV001', 'VV///')
+    def test_parseverticalvv(self, string):
+        test, _ = metar._parsecloudsvv(string)
+
+        self.assertIsInstance(test, int)
+        self.assertTrue(test >= -1)
+
+    @data('SKC', 'NSC', 'NCD')
+    def test_parseskyclear(self, string):
+        test, _ = metar._parsecloudsvv(string)
+
+        self.assertIn(test, ('SKC', 'NSC', 'NCD'))
