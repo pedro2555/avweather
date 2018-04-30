@@ -28,22 +28,22 @@ def parse(string):
     Implementation based on Annex 3 to the Convetion on Internation Civil
     Aviation, as published by ICAO, 16th Edition July 2007.
     """
-    Metar = namedtuple('Metar',
-                       'metartype location time reporttype report unmatched')
-    Report = namedtuple('Report', 'wind sky temperature pressure remarks')
-    
+    metartuple = namedtuple(
+        'Metar',
+        'metartype location time reporttype report unmatched')
+    reporttuple = namedtuple('Report', 'wind sky temperature pressure remarks')
+
     metartype, string = _p.ptype(string.strip().upper())
     location, string = _p.plocation(string)
     time, string = _p.ptime(string)
     reporttype, string = _p.preporttype(string)
-    
+
     report = None
     if reporttype != 'NIL':
         wind, string = _p.pwind(string)
         sky, string = _p.psky(string)
         temperature, string = _p.ptemperature(string)
         pressure, string = _p.ppressure(string)
+        report = reporttuple(wind, sky, temperature, pressure, None)
 
-        report = Report(wind, sky, temperature, pressure, None)
-
-    return Metar(metartype, location, time, reporttype, report, string)
+    return metartuple(metartype, location, time, reporttype, report, string)
