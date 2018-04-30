@@ -21,7 +21,7 @@ along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 """
 import unittest
 
-from avweather.parsers import search, occurs
+from avweather._parsers import search, occurs
 
 class TestAvweatherParsers(unittest.TestCase):
     def test_search_decorator(self):

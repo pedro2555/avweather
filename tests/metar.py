@@ -24,7 +24,8 @@ from ddt import ddt
 from ddt import data
 from ddt import unpack
 
-from avweather import metar
+from avweather.metar import parse
+from avweather._parsers import metar
 
 @ddt
 class MetarTests(unittest.TestCase):
@@ -34,9 +35,9 @@ class MetarTests(unittest.TestCase):
         'METAR LPPT 010000Z AUTO 00001KT CAVOK 03/M04 Q1013',
         'METAR LPPT 270130Z 34012KT 9999 FEW011 12/10 Q1013',
     )
-    def test_parse(self, string):
-        test = metar.parse(string)
-        
+    def testp(self, string):
+        test = parse(string)
+
         if test.reporttype != 'NIL':
             self.assertEqual(test.report.pressure, 1013)
         else:
@@ -49,8 +50,8 @@ class MetarTests(unittest.TestCase):
         'SPECI A000',
         'METAR value'
     )
-    def test_parsetype(self, string):
-        test, tail = metar._parsetype(string)
+    def testptype(self, string):
+        test, tail = metar.ptype(string)
 
         if test is not None:
             self.assertIn(test, ('METAR', 'SPECI'))
@@ -61,10 +62,10 @@ class MetarTests(unittest.TestCase):
     @data(
         'A000',
         'LPPT',
-        'KEWR'
+        'KEWR',
     )
-    def test_parselocation(self, string):
-        test, tail = metar._parselocation(string)
+    def testplocation(self, string):
+        test, tail = metar.plocation(string)
 
         if test is not None:
             self.assertIsInstance(test, str)
@@ -77,10 +78,10 @@ class MetarTests(unittest.TestCase):
 
     @data(
         '010000Z',
-        '300200Z dsfacvx'
+        '300200Z dsfacvx',
     )
-    def test_parsetime(self, string):
-        test, tail = metar._parsetime(string)
+    def testptime(self, string):
+        test, tail = metar.ptime(string)
 
         if test is not None:
             day, hour, minute = test
@@ -96,8 +97,8 @@ class MetarTests(unittest.TestCase):
         'AUTO afd',
         'NIL affvdf',
     )
-    def test_parsereporttype(self, string):
-        test, tail = metar._parsereporttype(string)
+    def testpreporttype(self, string):
+        test, tail = metar.preporttype(string)
 
         if test is not None:
             self.assertIn(test, ('AUTO', 'NIL'))
@@ -107,11 +108,11 @@ class MetarTests(unittest.TestCase):
     @data(
         (' NIL sfge', 'NIL'),
         ('AUTO asdf', 'AUTO'),
-        ('sdf gre', None)
+        ('sdf gre', None),
     )
     @unpack
-    def test_parsereporttype_value(self, string, expected):
-        test, _ = metar._parsereporttype(string)
+    def testpreporttype_value(self, string, expected):
+        test, _ = metar.preporttype(string)
         self.assertEqual(test, expected)
 
     @data(
@@ -120,8 +121,8 @@ class MetarTests(unittest.TestCase):
         '01010KT 000V020',
         '01010G20KT 000V020',
     )
-    def test_parsewind(self, string):
-        test, tail = metar._parsewind(string)
+    def testpwind(self, string):
+        test, tail = metar.pwind(string)
 
         direction, speed, gust, unit, vrbfrom, vrbto = test
         self.assertIn(direction, (*range(359), 'VRB'))
@@ -131,12 +132,10 @@ class MetarTests(unittest.TestCase):
         self.assertIn(vrbfrom, (*range(999), None))
         self.assertIn(vrbto, (*range(999), None))
 
-    @data(
-        ('CAVOK', None),
-    )
+    @data(('CAVOK', None),)
     @unpack
-    def test_parsesky(self, string, expected):
-        test, tail = metar._parsesky(string)
+    def testpsky(self, string, expected):
+        test, tail = metar.psky(string)
 
         self.assertEqual(test, expected)
 
@@ -147,8 +146,8 @@ class MetarTests(unittest.TestCase):
         '0350 0200N',
         '9000 1000NE',
     )
-    def test_parsevis(self, string):
-        test, tail = metar._parsevis(string)
+    def testpvis(self, string):
+        test, tail = metar.pvis(string)
 
         dist, ndv, mindist, mindistdir = test
 
@@ -167,8 +166,8 @@ class MetarTests(unittest.TestCase):
         'R01L/0250 R01R/0100',
         'R01/P0250',
     )
-    def test_parservr(self, string):
-        test, tail = metar._parservr(string)
+    def testprvr(self, string):
+        test, tail = metar.prvr(string)
 
         self.assertIsInstance(test, tuple)
 
@@ -194,17 +193,15 @@ class MetarTests(unittest.TestCase):
         ('R01/M0250VP0500U', ('01', (250, 'M', 500, 'P', 'U'))),
     )
     @unpack
-    def test_parservr_value(self, string, expected):
-        test, tail = metar._parservr(string)
+    def testprvr_value(self, string, expected):
+        test, tail = metar.prvr(string)
 
         test = test[0]
         self.assertEqual(test, expected)
 
-    @data(
-        'RA',
-    )
-    def test_parsepercip(self, string):
-        test, tail = metar._parsepercip(string)
+    @data('RA',)
+    def testppercipitation(self, string):
+        test, tail = metar.ppercipitation(string)
 
         intensity, phenomena = test
 
@@ -216,11 +213,11 @@ class MetarTests(unittest.TestCase):
         (
             '',
             None
-        ),
+            ),
         (
             'RA',
             ('', ('RA', ))
-        ),
+            ),
         (
             '-RA',
             ('-', ('RA', ))
@@ -228,11 +225,10 @@ class MetarTests(unittest.TestCase):
         (
             '+RASN',
             ('+', ('RA', 'SN'))
-        ),
-    )
+        ),)
     @unpack
-    def test_parsepercip_value(self, string, expected):
-        test, tail = metar._parsepercip(string)
+    def testppercipitation_value(self, string, expected):
+        test, tail = metar.ppercipitation(string)
 
         self.assertEqual(test, expected)
 
@@ -242,12 +238,12 @@ class MetarTests(unittest.TestCase):
         ('BLDUFG', 2),
     )
     @unpack
-    def test_parseobscuration(self, string, lenght):
-        test, tail = metar._parseobscuration(string)
+    def testpobscuration(self, string, lenght):
+        test, tail = metar.pobscuration(string)
 
         self.assertIsInstance(test, tuple)
         self.assertTrue(len(test) == lenght)
-    
+
     @data(
         ('', None),
         ('FG', 1),
@@ -255,22 +251,22 @@ class MetarTests(unittest.TestCase):
         ('BLSA', 1),
     )
     @unpack
-    def test_parseotherphenomena(self, string, lenght):
-        test, tail = metar._parseotherphenomena(string)
+    def testpotherphenomena(self, string, lenght):
+        test, tail = metar.potherphenomena(string)
 
         if lenght is None:
             self.assertEqual(test, None)
         else:
             self.assertIsInstance(test, tuple)
             self.assertTrue(len(test.phenomena) == lenght)
-    
+
     @data(
         'OVC014',
         'FEW011',
         'FEW014 BKN025CB',
     )
-    def test_parseclouds(self, string):
-        test, _ = metar._parsecloudsvv(string)
+    def testpclouds(self, string):
+        test, _ = metar.pcloudsverticalvis(string)
 
         self.assertIsInstance(test, tuple)
         self.assertTrue(len(test) > 0)
@@ -282,18 +278,18 @@ class MetarTests(unittest.TestCase):
             self.assertIn(cloud.type, ('CB', 'TCU', '///', None))
 
     @data('VV010', 'VV001', 'VV///')
-    def test_parseverticalvv(self, string):
-        test, _ = metar._parsecloudsvv(string)
+    def testpverticalvv(self, string):
+        test, _ = metar.pcloudsverticalvis(string)
 
         self.assertIsInstance(test, int)
         self.assertTrue(test >= -1)
 
     @data('SKC', 'NSC', 'NCD')
-    def test_parseskyclear(self, string):
-        test, _ = metar._parsecloudsvv(string)
+    def testpskyclear(self, string):
+        test, _ = metar.pcloudsverticalvis(string)
 
         self.assertIn(test, ('SKC', 'NSC', 'NCD'))
 
     @data('FEW011')
-    def test_parseskyconditions(self, string):
-        test, _ = metar._parsecloudsvv(string)
+    def testpskyconditions(self, string):
+        test, _ = metar.pcloudsverticalvis(string)
