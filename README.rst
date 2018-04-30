@@ -13,6 +13,6 @@ Usage
 Changelog
 =========
 
-0.0.2
+0.0.5
 
 Added METAR parsing module based on ICAO Annex 3 documentation

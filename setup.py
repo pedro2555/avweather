@@ -23,8 +23,8 @@ from setuptools import setup
 
 setup(
     name = 'avweather',
-    packages = ['avweather', 'avweather._parsers'],
-    version = '0.0.4',
+    packages = ['avweather',],
+    version = '0.0.5',
     description = "Aviation Weather Tools",
     author = "Pedro Rodrigues",
     author_email = 'prodrigues1990@gmail.com',
