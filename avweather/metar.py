@@ -19,54 +19,31 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 """
+from collections import namedtuple
+from avweather._parsers import metar as _p
 
-import re
+def parse(string):
+    """Parses a METAR or SPECI text report into python primitives.
 
-PATTERN = (
-    r"""(?P<metartype>
-         METAR|METAR\sCOR|SPECI
-    )""",
-    r"""(?P<station>
-        [A-Z][A-Z0-9]{3}
-    )""",
-    r"""(?P<time>
-        [\d]{6}Z
-    )""",
-    r"""(?P<metreporttype>(AUTO|NIL)?)
-        (?P<metreport>.*)""",
-)
-PATTERN = '^%s$' % r'\s'.join(PATTERN)
-PATTERN = re.compile(PATTERN, re.I | re.X)
+    Implementation based on Annex 3 to the Convetion on Internation Civil
+    Aviation, as published by ICAO, 16th Edition July 2007.
+    """
+    Metar = namedtuple('Metar',
+                       'metartype location time reporttype report unmatched')
+    Report = namedtuple('Report', 'wind sky temperature pressure remarks')
+    
+    metartype, string = _p.ptype(string.strip().upper())
+    location, string = _p.plocation(string)
+    time, string = _p.ptime(string)
+    reporttype, string = _p.preporttype(string)
+    
+    report = None
+    if reporttype != 'NIL':
+        wind, string = _p.pwind(string)
+        sky, string = _p.psky(string)
+        temperature, string = _p.ptemperature(string)
+        pressure, string = _p.ppressure(string)
 
-def match(report):
-    """Maps a given METAR textual report into a python dictionary"""
+        report = Report(wind, sky, temperature, pressure, None)
 
-    if not isinstance(report, str):
-        raise TypeError('expected string but %s given.' % type(report))
-
-    report = report.strip()
-    mobj = PATTERN.search(report)
-
-    if mobj is None:
-        raise ValueError('%s is not a valid metar.' % report)
-
-    mobj = mobj.groupdict()
-
-    # validate MET REPORT and TYPE
-    metreporttype = mobj['metreporttype']
-    metreporttype = metreporttype if metreporttype != '' else None
-
-    metreport = mobj['metreport']
-    if metreporttype in ('AUTO', ''):
-        metreport = metreport
-    elif metreporttype == 'NIL':
-        if metreport != '':
-            raise ValueError('%s provides both NIL and MET REPORT, only one expected.')
-        metreport = None
-
-    return {
-        'metartype': mobj['metartype'],
-        'station': mobj['station'],
-        'metreporttype': metreporttype if metreporttype != '' else None,
-        'metreport': metreport,
-    }
+    return Metar(metartype, location, time, reporttype, report, string)
