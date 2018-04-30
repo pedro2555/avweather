@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 """
 from collections import namedtuple
-from avweather._parsers import metar as _p
+from . import _parsers as _p
 
 def parse(string):
     """Parses a METAR or SPECI text report into python primitives.
@@ -33,17 +33,17 @@ def parse(string):
         'metartype location time reporttype report unmatched')
     reporttuple = namedtuple('Report', 'wind sky temperature pressure remarks')
 
-    metartype, string = _p.ptype(string.strip().upper())
-    location, string = _p.plocation(string)
-    time, string = _p.ptime(string)
-    reporttype, string = _p.preporttype(string)
+    metartype, string = _p.metar.ptype(string.strip().upper())
+    location, string = _p.metar.plocation(string)
+    time, string = _p.metar.ptime(string)
+    reporttype, string = _p.metar.preporttype(string)
 
     report = None
     if reporttype != 'NIL':
-        wind, string = _p.pwind(string)
-        sky, string = _p.psky(string)
-        temperature, string = _p.ptemperature(string)
-        pressure, string = _p.ppressure(string)
+        wind, string = _p.metar.pwind(string)
+        sky, string = _p.metar.psky(string)
+        temperature, string = _p.metar.ptemperature(string)
+        pressure, string = _p.metar.ppressure(string)
         report = reporttuple(wind, sky, temperature, pressure, None)
 
     return metartuple(metartype, location, time, reporttype, report, string)
