@@ -26,30 +26,36 @@ from avweather._parsers import search, occurs
     (?P<type>METAR|SPECI|METAR\sCOR|SPECI\sCOR)
 """)
 def ptype(metartype):
+    """Returns a string with the METAR type or None"""
     return metartype['type']
 
 @search(r"""
     (?P<location>[A-Z][A-Z0-9]{3})
 """)
 def plocation(location):
+    """Retuns a string with the METAR location ICAO code or None"""
     return location['location']
 
 @search(r"""
     (?P<time>[0-9]{6})Z
 """)
 def ptime(time):
-    MetarObsTime = namedtuple('MetarObsTime', 'day hour minute')
+    """Returns a tuple with (day, hour, minute) with the METAR observation
+    time or (None, None, None) if time pattern not found
+    """
+    tmetar_obs_time = namedtuple('MetarObsTime', 'day hour minute')
     time = time['time']
     day = int(time[:2])
     hour = int(time[2:4])
     minute = int(time[4:])
 
-    return MetarObsTime(day, hour, minute)
+    return tmetar_obs_time(day, hour, minute)
 
 @search(r"""
     (?P<reporttype>AUTO|NIL)?
 """)
 def preporttype(reporttype):
+    """Retuns a string with the METAR report type or None"""
     return reporttype['reporttype']
 
 @search(r"""
@@ -63,14 +69,18 @@ def preporttype(reporttype):
     ))?
 """)
 def pwind(wind):
-    Wind = namedtuple('Wind', 'direction speed gust unit variable_from variable_to')
+    """Returns a (direction, speed, gust, unit, variable_from, variable_to) of
+    (int, int, int, string, int, int) or (None*6) for any matching wind report
+    information.
+    """
+    twind = namedtuple('Wind', 'direction speed gust unit variable_from variable_to')
     if wind['gust'] is not None:
         wind['gust'] = int(wind['gust'])
     if wind['vrbfrom'] is not None:
         wind['vrbfrom'] = int(wind['vrbfrom'])
     if wind['vrbto'] is not None:
         wind['vrbto'] = int(wind['vrbto'])
-    return Wind(
+    return twind(
         int(wind['direction']),
         int(wind['speed']),
         wind['gust'],
@@ -88,13 +98,17 @@ def pwind(wind):
     )?
 """)
 def pvis(item):
-    Visibility = namedtuple('Visibility', 'distance ndv min_distance min_direction')
-    
+    """Returns (distance, ndv, min_distance, min_direction) of
+    (int, bool, int, int) or (None*4) for the visibility information in the
+    METAR report.
+    """
+    tvisibility = namedtuple('Visibility', 'distance ndv min_distance min_direction')
+
     ndv = item['ndv'] is not None
     min_distance = item['min_distance']
     if min_distance is not None:
         min_distance = int(min_distance)
-    return Visibility(
+    return tvisibility(
         int(item['distance']),
         ndv,
         min_distance,
@@ -111,10 +125,14 @@ def pvis(item):
     )?
 """)
 def prvr(rvr):
-    Rvr = namedtuple('Rvr', 'distance modifier variation variation_modifier tendency')
+    """Returns ((distance, modifier, variation, variation_modifier, tendency),)
+    of ((int, string, int, string, string),) or () for runway visual range
+    information in the METAR report.
+    """
+    trvr = namedtuple('Rvr', 'distance modifier variation variation_modifier tendency')
     if None in (rvr['rwy'], rvr['rvr']):
         return None
-    return rvr['rwy'], Rvr(
+    return rvr['rwy'], trvr(
         int(rvr['rvr']),
         rvr['rvrmod'],
         int(rvr['var']) if rvr['var'] is not None else None,
@@ -124,10 +142,14 @@ def prvr(rvr):
 
 @search(r'(?P<intensity>\+|-)?')
 def pintensity(item):
+    """Returns a string matching a '-' or '='"""
     return item['intensity']
 
 def ppercipitation(string):
-    Percipitation = namedtuple('Percipitation', 'intensity phenomena')
+    """Returns (intensity, (phenomena,)) of (string, (string,)) where phenomena is a
+    string for each percipitation reported in the METAR report.
+    """
+    tpercipitation = namedtuple('Percipitation', 'intensity phenomena')
 
     @occurs(10)
     @search(r"""(?P<phenomena>
@@ -135,6 +157,7 @@ def ppercipitation(string):
         TSRA|TSSN|UP
     )""")
     def pphenomena(item):
+        """Returns the phenomena tuple"""
         return item['phenomena']
 
     intensity, tail = pintensity(string)
@@ -142,9 +165,9 @@ def ppercipitation(string):
         intensity = ''
     phenomena, tail = pphenomena(tail)
 
-    if len(phenomena) == 0:
+    if not phenomena:
         return None, tail
-    return Percipitation(intensity, phenomena), tail
+    return tpercipitation(intensity, phenomena), tail
 
 @occurs(10)
 @search(r"""
@@ -154,27 +177,38 @@ def ppercipitation(string):
     )?
 """)
 def pobscuration(obscuration):
+    """Returns (obscuration,) of (string,) for all obscuration phenomena
+    report in the METAR report.
+    """
     return obscuration['obscuration']
 
 def potherphenomena(string):
-    OtherPhenomena = namedtuple('OtherPhenomena', 'intensity phenomena')
-    
+    """Returns (intensity, (phenomena,)) of (string, (string,)) where
+    phenomena is a string for every other phenomena that is not percipitation
+    or obscuration reported in the METAR report.
+    """
+    tother_phenomena = namedtuple('OtherPhenomena', 'intensity phenomena')
+
     @occurs(10)
     @search(r"""(?P<phenomena>
         FG|PO|FC|DS|SS|TS|SH|BLSN|BLSA|BLDU|VA
     )""")
     def pphenomena(item):
+        """Returns the phenomena tuple"""
         return item['phenomena']
 
     intensity, tail = pintensity(string)
     phenomena, tail = pphenomena(tail)
 
-    if len(phenomena) == 0:
+    if not phenomena:
         return None, tail
 
-    return OtherPhenomena(intensity, phenomena), tail
+    return tother_phenomena(intensity, phenomena), tail
 
 def pcloudsverticalvis(string):
+    """Returns tuple for clouds if reported, or int for vertical visibility if
+    reported instead, or 'skyclear' if any of skyclear indications is found.
+    """
     @occurs(4)
     @search(r"""
         (?P<amount>FEW|SCT|BKN|OVC)
@@ -182,21 +216,25 @@ def pcloudsverticalvis(string):
         (?P<type>CB|TCU|///)?
     """)
     def pclouds(item):
-        Cloud = namedtuple('Cloud', 'amount height type')
+        """Returns ((amount, height, type),) of ((string, int, string),) for
+        clouds or ()"""
+        tcloud = namedtuple('Cloud', 'amount height type')
         height = item['height']
         if height == '///':
             height = -1
         else:
             height = int(height)
-        return Cloud(item['amount'], height, item['type'])
+        return tcloud(item['amount'], height, item['type'])
     clouds, tail = pclouds(string)
-    if len(clouds) > 0:
+    if clouds:
         return clouds, tail
 
     @search(r"""
         VV(?P<verticalvis>[\d]{3}|///)
     """)
     def pverticalvis(item):
+        """Returns int for the vertical visibility, -1 for unavailable or None
+        """
         verticalvis = item['verticalvis']
         if verticalvis == '///':
             return -1
@@ -207,15 +245,20 @@ def pcloudsverticalvis(string):
 
     @search(r'(?P<skyclear>SKC|NSC|NCD)')
     def pskyclear(item):
+        """Returns 'skyclear' or None"""
         return item['skyclear']
     skyclear, tail = pskyclear(string)
     return skyclear, tail
 
 def psky(string):
-    SkyConditions = namedtuple('SkyConditions', 'visibility rvr weather clouds')
+    """Returns (visibility rvr weather clouds) for all the function returns
+    above.
+    """
+    tsky_conditions = namedtuple('SkyConditions', 'visibility rvr weather clouds')
 
     @search(r'(?P<cavok>CAVOK)?')
     def pcavok(item):
+        """Returns CAVOK or None"""
         return item['cavok']
 
     cavok, string = pcavok(string)
@@ -226,15 +269,15 @@ def psky(string):
     visibility, string = pvis(string)
     rvr, string = prvr(string)
 
-    Weather = namedtuple('Weather', 'precipitation obscuration other')
+    tweather = namedtuple('Weather', 'precipitation obscuration other')
     precipitation, string = ppercipitation(string)
     obscuration, string = pobscuration(string)
     other, string = potherphenomena(string)
-    current_weather = Weather(precipitation, obscuration, other)
+    current_weather = tweather(precipitation, obscuration, other)
 
     clouds, string = pcloudsverticalvis(string)
 
-    return SkyConditions(visibility, rvr, current_weather, clouds), string
+    return tsky_conditions(visibility, rvr, current_weather, clouds), string
 
 @search(r"""
     (?P<air_signal>M)?
@@ -243,7 +286,9 @@ def psky(string):
     (?P<dewpoint>[\d]{2})
 """)
 def ptemperature(item):
-    Temperature = namedtuple('Temperature', 'air dewpoint')
+    """Returns (air, dewpoint) as (int, int) for air and dewpoint temperatures
+    """
+    ttemperature = namedtuple('Temperature', 'air dewpoint')
 
     air = int(item['air'])
     if item['air_signal'] is not None:
@@ -252,8 +297,9 @@ def ptemperature(item):
     if item['dewpoint_signal'] is not None:
         dewpoint = 0 - dewpoint
 
-    return Temperature(air, dewpoint)
+    return ttemperature(air, dewpoint)
 
 @search(r'Q(?P<pressure>[\d]{4})')
 def ppressure(item):
+    """Returns pressure as int in hectopascals"""
     return int(item['pressure'])

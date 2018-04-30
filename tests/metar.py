@@ -25,7 +25,7 @@ from ddt import data
 from ddt import unpack
 
 from avweather.metar import parse
-from avweather._parsers import metar
+from avweather._metar_parsers import *
 
 @ddt
 class MetarTests(unittest.TestCase):
@@ -51,7 +51,7 @@ class MetarTests(unittest.TestCase):
         'METAR value'
     )
     def testptype(self, string):
-        test, tail = metar.ptype(string)
+        test, tail = ptype(string)
 
         if test is not None:
             self.assertIn(test, ('METAR', 'SPECI'))
@@ -65,7 +65,7 @@ class MetarTests(unittest.TestCase):
         'KEWR',
     )
     def testplocation(self, string):
-        test, tail = metar.plocation(string)
+        test, tail = plocation(string)
 
         if test is not None:
             self.assertIsInstance(test, str)
@@ -81,7 +81,7 @@ class MetarTests(unittest.TestCase):
         '300200Z dsfacvx',
     )
     def testptime(self, string):
-        test, tail = metar.ptime(string)
+        test, tail = ptime(string)
 
         if test is not None:
             day, hour, minute = test
@@ -98,7 +98,7 @@ class MetarTests(unittest.TestCase):
         'NIL affvdf',
     )
     def testpreporttype(self, string):
-        test, tail = metar.preporttype(string)
+        test, tail = preporttype(string)
 
         if test is not None:
             self.assertIn(test, ('AUTO', 'NIL'))
@@ -112,7 +112,7 @@ class MetarTests(unittest.TestCase):
     )
     @unpack
     def testpreporttype_value(self, string, expected):
-        test, _ = metar.preporttype(string)
+        test, _ = preporttype(string)
         self.assertEqual(test, expected)
 
     @data(
@@ -122,7 +122,7 @@ class MetarTests(unittest.TestCase):
         '01010G20KT 000V020',
     )
     def testpwind(self, string):
-        test, tail = metar.pwind(string)
+        test, tail = pwind(string)
 
         direction, speed, gust, unit, vrbfrom, vrbto = test
         self.assertIn(direction, (*range(359), 'VRB'))
@@ -135,7 +135,7 @@ class MetarTests(unittest.TestCase):
     @data(('CAVOK', None),)
     @unpack
     def testpsky(self, string, expected):
-        test, tail = metar.psky(string)
+        test, tail = psky(string)
 
         self.assertEqual(test, expected)
 
@@ -147,7 +147,7 @@ class MetarTests(unittest.TestCase):
         '9000 1000NE',
     )
     def testpvis(self, string):
-        test, tail = metar.pvis(string)
+        test, tail = pvis(string)
 
         dist, ndv, mindist, mindistdir = test
 
@@ -167,7 +167,7 @@ class MetarTests(unittest.TestCase):
         'R01/P0250',
     )
     def testprvr(self, string):
-        test, tail = metar.prvr(string)
+        test, tail = prvr(string)
 
         self.assertIsInstance(test, tuple)
 
@@ -194,14 +194,14 @@ class MetarTests(unittest.TestCase):
     )
     @unpack
     def testprvr_value(self, string, expected):
-        test, tail = metar.prvr(string)
+        test, tail = prvr(string)
 
         test = test[0]
         self.assertEqual(test, expected)
 
     @data('RA',)
     def testppercipitation(self, string):
-        test, tail = metar.ppercipitation(string)
+        test, tail = ppercipitation(string)
 
         intensity, phenomena = test
 
@@ -228,7 +228,7 @@ class MetarTests(unittest.TestCase):
         ),)
     @unpack
     def testppercipitation_value(self, string, expected):
-        test, tail = metar.ppercipitation(string)
+        test, tail = ppercipitation(string)
 
         self.assertEqual(test, expected)
 
@@ -239,7 +239,7 @@ class MetarTests(unittest.TestCase):
     )
     @unpack
     def testpobscuration(self, string, lenght):
-        test, tail = metar.pobscuration(string)
+        test, tail = pobscuration(string)
 
         self.assertIsInstance(test, tuple)
         self.assertTrue(len(test) == lenght)
@@ -252,7 +252,7 @@ class MetarTests(unittest.TestCase):
     )
     @unpack
     def testpotherphenomena(self, string, lenght):
-        test, tail = metar.potherphenomena(string)
+        test, tail = potherphenomena(string)
 
         if lenght is None:
             self.assertEqual(test, None)
@@ -266,7 +266,7 @@ class MetarTests(unittest.TestCase):
         'FEW014 BKN025CB',
     )
     def testpclouds(self, string):
-        test, _ = metar.pcloudsverticalvis(string)
+        test, _ = pcloudsverticalvis(string)
 
         self.assertIsInstance(test, tuple)
         self.assertTrue(len(test) > 0)
@@ -279,17 +279,17 @@ class MetarTests(unittest.TestCase):
 
     @data('VV010', 'VV001', 'VV///')
     def testpverticalvv(self, string):
-        test, _ = metar.pcloudsverticalvis(string)
+        test, _ = pcloudsverticalvis(string)
 
         self.assertIsInstance(test, int)
         self.assertTrue(test >= -1)
 
     @data('SKC', 'NSC', 'NCD')
     def testpskyclear(self, string):
-        test, _ = metar.pcloudsverticalvis(string)
+        test, _ = pcloudsverticalvis(string)
 
         self.assertIn(test, ('SKC', 'NSC', 'NCD'))
 
     @data('FEW011')
     def testpskyconditions(self, string):
-        test, _ = metar.pcloudsverticalvis(string)
+        test, _ = pcloudsverticalvis(string)

@@ -22,7 +22,7 @@ along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 import re
 
 def search(regex):
-    """
+    """Searches a given regex parameterized query into a dict
     >>> @search('(?P<letter>[A-Z])?')
     ... def getletter(string):
     ...     return string['letter']
@@ -33,8 +33,10 @@ def search(regex):
     (None, '0BC')
     """
     def decorator(parse_func):
+        """Returns the search decorator"""
 
         def func_wrapper(tail):
+            """Returns the decorated search wrapper"""
             match = re.search(regex, tail.strip(), re.I | re.X)
             if match is None:
                 return None, tail
@@ -42,12 +44,13 @@ def search(regex):
             if item is not None:
                 tail = tail.strip()[match.end():]
             return item, tail
-        
+
         return func_wrapper
     return decorator
 
 def occurs(times):
-    """
+    """Searches a given regex parameterized query into a tuple of dicts for
+    every match
     >>> @occurs(2)
     >>> @search('(?P<letter>[A-Z])?')
     ... def get2letters(string):
@@ -57,13 +60,14 @@ def occurs(times):
     (('A', 'B'), 'C')
     >>> get2letters('0BC')
     ((), '0BC')
-    
+
     """
-    if type(times) != int or times < 1:
-        raise ArgumentError('times must be a positive integer.')
+    if not isinstance(times, int) or times < 1:
+        raise ValueError('times must be a positive integer.')
     def decorator(search_func):
-        
+        """Returns the occurs decorator"""
         def func_wrapper(tail):
+            """Returns the decorated occurs wrapper"""
             items = []
             item, tail = search_func(tail)
             while item is not None:
@@ -75,4 +79,3 @@ def occurs(times):
 
         return func_wrapper
     return decorator
-
