@@ -120,17 +120,21 @@ class MetarTests(unittest.TestCase):
         '01010G20KT',
         '01010KT 000V020',
         '01010G20KT 000V020',
+        'VRB03KT',
+        'VRB03G17KT',
+        '/////KT',
     )
     def testpwind(self, string):
         test, tail = pwind(string)
 
         direction, speed, gust, unit, vrbfrom, vrbto = test
-        self.assertIn(direction, (*range(359), 'VRB'))
-        self.assertIn(speed, range(999))
+        self.assertIn(direction, (*range(359), 'VRB', '///'))
+        self.assertIn(speed, (*range(999), '//'))
         self.assertIn(gust, (*range(999), None))
         self.assertIn(unit, ('KT', 'KMH'))
         self.assertIn(vrbfrom, (*range(999), None))
         self.assertIn(vrbto, (*range(999), None))
+
 
     @data(('CAVOK', None),)
     @unpack

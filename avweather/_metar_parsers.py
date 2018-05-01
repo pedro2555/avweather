@@ -59,13 +59,13 @@ def preporttype(reporttype):
     return reporttype['reporttype']
 
 @search(r"""
-    (?P<direction>[0-9]{2}0|VRB)
-    P?(?P<speed>[0-9]{2,3})
+    (?P<direction>[0-9]{2}0|VRB|///)
+    P?(?P<speed>[0-9]{2,3}|//)
     (GP?(?P<gust>[0-9]{2,3}))?
     (?P<unit>KT|KMH)
     (\s(
-        (?P<vrbfrom>[0-9]{2}0)
-        V(?P<vrbto>[0-9]{2}0)
+        (?P<variable_from>[0-9]{2}0)
+        V(?P<variable_to>[0-9]{2}0)
     ))?
 """)
 def pwind(wind):
@@ -74,19 +74,29 @@ def pwind(wind):
     information.
     """
     twind = namedtuple('Wind', 'direction speed gust unit variable_from variable_to')
-    if wind['gust'] is not None:
-        wind['gust'] = int(wind['gust'])
-    if wind['vrbfrom'] is not None:
-        wind['vrbfrom'] = int(wind['vrbfrom'])
-    if wind['vrbto'] is not None:
-        wind['vrbto'] = int(wind['vrbto'])
+    direction = wind['direction']
+    if direction.isnumeric():
+        direction = int(direction)
+    speed = wind['speed']
+    if speed.isnumeric():
+        speed = int(speed)
+    gust = wind['gust']
+    if gust and gust.isnumeric():
+        gust = int(gust)
+    unit = wind['unit']
+    variable_from = wind['variable_from']
+    if variable_from and variable_from.isnumeric():
+        variable_from = int(variable_from)
+    variable_to = wind['variable_to']
+    if variable_to and variable_to.isnumeric():
+        variable_to = int(variable_to)
     return twind(
-        int(wind['direction']),
-        int(wind['speed']),
-        wind['gust'],
-        wind['unit'],
-        wind['vrbfrom'],
-        wind['vrbto'],
+        direction,
+        speed,
+        gust,
+        unit,
+        variable_from,
+        variable_to,
     )
 
 @search(r"""
