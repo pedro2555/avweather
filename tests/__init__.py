@@ -27,9 +27,9 @@ from random import choice
 def parser_test(parser_func):
     def decorator(test_func):
         def wrapper(self, string, *args, **kwargs):
-            random = ''.join(choice(ascii_uppercase + digits) for _ in range(9))
-            test, tail = parser_func(' '.join((string, random)))
-            self.assertEqual(tail, ' ' + random)
+            random = ' 0EC3F0F0992C2F5F1C1BA80528E2A8F7A965126A'
+            test, tail = parser_func(string + random)
+            self.assertEqual(tail, random)
             self.assertNotEqual(string, tail)
             test_func(self, test, *args, **kwargs) # run the actual tests
         return wrapper
