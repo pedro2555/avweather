@@ -263,6 +263,12 @@ class MetarTests(unittest.TestCase):
     def testpskyclear(self, test):
         self.assertIn(test, ('SKC', 'NSC', 'NCD'))
 
+    @data('RERA', 'RETS')
+    @parser_test(precentweather)
+    def test_precentweather(self, test):
+        self.assertIsInstance(test, tuple)
+        self.assertNotIn('RE', test)
+
     @data(
         ('WS ALL RWYS', 0),
         ('WS RWY03', 1),

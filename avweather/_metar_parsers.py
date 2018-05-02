@@ -314,6 +314,34 @@ def ppressure(item):
     """Returns pressure as int in hectopascals"""
     return int(item['pressure'])
 
+def precentweather(string):
+    @search(r'(?P<header>RE)')
+    def pheader(items):
+        return items['header']
+
+    header, string = pheader(string)
+    if header:
+        phenomena = []
+        
+        # not sure if reported phenomena follows this order mandatory
+        # there is no indication otherwise, and their only ever referenced
+        # in this order; its is unfundamented assumption
+        percipitation, string = ppercipitation(string)
+        if percipitation:
+            phenomena.append(percipitation.phenomena)
+
+        obscuration, string = pobscuration(string)
+        if obscuration:
+            phenomena.append(obscuration)
+
+        other, string = potherphenomena(string)
+        if other:
+            phenomena.append(other)
+
+        return tuple(phenomena), string
+    else:
+        return (), string
+
 def pwindshear(string):
     @search(r"""
         (?P<header>WS)
