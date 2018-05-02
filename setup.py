@@ -21,11 +21,17 @@ along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 """
 from setuptools import setup
 
+long_description = ''
+with open('./README.rst', 'r') as readme:
+    long_description = readme.read()
+
 setup(
     name = 'avweather',
     packages = ['avweather',],
-    version = '0.0.5',
+    version = '0.0.6',
     description = "Aviation Weather Tools",
+    long_description = long_description,
+    keywords = ['metar',],
     author = "Pedro Rodrigues",
     author_email = 'prodrigues1990@gmail.com',
     license = 'GPLv2',
