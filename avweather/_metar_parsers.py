@@ -103,8 +103,8 @@ def pwind(wind):
     (?P<distance>[\d]{4})
     (?P<ndv>NDV)?
     (\s
-        (?P<min_distance>[\d]{4})\s
-        (?P<min_direction>N|NE|E|SE|S|SW|W|NW)
+        (?P<min_distance>[\d]{4})
+        (?P<min_direction>NE|SE|SW|NW|N|E|S|W)
     )?
 """)
 def pvis(item):
