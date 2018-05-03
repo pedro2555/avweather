@@ -365,7 +365,15 @@ def pwindshear(string):
 
     return prwys(string)
 
-@search(r'')
+@search(r"""
+    W(?P<temperature_signal>M)?
+    (?P<temperature>[\d]{2})
+    /S(?P<state>\d)
+""")
 def psea(items):
-    ttemperature = namedtuple('Sea', 'temperature state')
-    return ttemperature(items['temperature'], items['state'])
+    temperaturetuple = namedtuple('Sea', 'temperature state')
+    temperature = int(items['temperature'])
+    if items['temperature_signal'] is not None:
+        temperature = 0 - temperature
+    state = int(items['state'])
+    return temperaturetuple(temperature, state)

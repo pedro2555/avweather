@@ -283,7 +283,10 @@ class MetarTests(unittest.TestCase):
             self.assertIsInstance(test, tuple)
             self.assertTrue(len(test) == lenght)
 
-    @data('W15/S2')
+    @data(
+        'W15/S2',
+        'WM03/S2',
+    )
     @parser_test(psea)
     def test_psea(self, test):
         temperature, state = test
