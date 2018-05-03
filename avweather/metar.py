@@ -31,7 +31,9 @@ def parse(string):
     metartuple = namedtuple(
         'Metar',
         'metartype location time reporttype report unmatched')
-    reporttuple = namedtuple('Report', 'wind sky temperature pressure remarks')
+    reporttuple = namedtuple(
+        'Report',
+        'wind sky temperature pressure supplementary remarks')
 
     metartype, string = _p.ptype(string.strip().upper())
     location, string = _p.plocation(string)
@@ -44,6 +46,12 @@ def parse(string):
         sky, string = _p.psky(string)
         temperature, string = _p.ptemperature(string)
         pressure, string = _p.ppressure(string)
-        report = reporttuple(wind, sky, temperature, pressure, None)
+        supplementary, string = _p.psupplementary(string)
+        report = reporttuple(wind,
+                             sky,
+                             temperature,
+                             pressure,
+                             supplementary,
+                             None)
 
     return metartuple(metartype, location, time, reporttype, report, string)

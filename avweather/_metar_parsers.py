@@ -377,3 +377,19 @@ def psea(items):
         temperature = 0 - temperature
     state = int(items['state'])
     return temperaturetuple(temperature, state)
+
+def psupplementary(string):
+    supplementarytuple = namedtuple(
+        'SupplementaryInfo',
+        'recent_weather windshear sea rwy_state')
+
+    recent_weather, string = precentweather(string)
+    windshear, string = pwindshear(string)
+    sea, string = psea(string)
+    rwy_state = None # Not implemented
+    return (
+        supplementarytuple(recent_weather,
+                           windshear,
+                           sea,
+                           rwy_state),
+        string)
