@@ -262,3 +262,18 @@ class MetarTests(unittest.TestCase):
     @parser_test(pcloudsverticalvis)
     def testpskyclear(self, test):
         self.assertIn(test, ('SKC', 'NSC', 'NCD'))
+
+    @data(
+        ('WS ALL RWYS', 0),
+        ('WS RWY03', 1),
+        ('WS RWY26L RWY26R', 2),
+    )
+    @unpack
+    @parser_test(pwindshear)
+    def test_windshear(self, test, lenght):
+        print(test)
+        if lenght == 0:
+            self.assertEqual(test, 'ALL')
+        else:
+            self.assertIsInstance(test, tuple)
+            self.assertTrue(len(test) == lenght)

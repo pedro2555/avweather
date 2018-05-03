@@ -313,3 +313,26 @@ def ptemperature(item):
 def ppressure(item):
     """Returns pressure as int in hectopascals"""
     return int(item['pressure'])
+
+def pwindshear(string):
+    @search(r"""
+        (?P<header>WS)
+    """)
+    def pheader(items):
+        return items['header']
+
+    @occurs(10)
+    @search(r"""
+        RWY(?P<rwy>[\d]{2}(L|C|R)?)
+    """)
+    def prwys(items):
+        return items['rwy']
+
+    is_windshear, string = pheader(string)
+    if not is_windshear:
+        return None, string
+
+    if string[1:9] == 'ALL RWYS':
+        return 'ALL', string[9:]
+
+    return prwys(string)
