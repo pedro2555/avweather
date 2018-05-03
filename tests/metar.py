@@ -277,9 +277,17 @@ class MetarTests(unittest.TestCase):
     @unpack
     @parser_test(pwindshear)
     def test_windshear(self, test, lenght):
-        print(test)
         if lenght == 0:
             self.assertEqual(test, 'ALL')
         else:
             self.assertIsInstance(test, tuple)
             self.assertTrue(len(test) == lenght)
+
+    @data('W15/S2')
+    @parser_test(psea)
+    def test_psea(self, test):
+        temperature, state = test
+        self.assertIsInstance(temperature, int)
+        self.assertIn(temperature, range(-99, 99))
+        self.assertIsInstance(state, int)
+        self.assertIn(state, range(9))

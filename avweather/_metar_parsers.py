@@ -364,3 +364,8 @@ def pwindshear(string):
         return 'ALL', string[9:]
 
     return prwys(string)
+
+@search(r'')
+def psea(items):
+    ttemperature = namedtuple('Sea', 'temperature state')
+    return ttemperature(items['temperature'], items['state'])
