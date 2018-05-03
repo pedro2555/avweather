@@ -315,14 +315,18 @@ def ppressure(item):
     return int(item['pressure'])
 
 def precentweather(string):
+    """Returns a tuple with percipitation, obscuration, or other phenomena
+    reported in recent weather (RE)"""
+
     @search(r'(?P<header>RE)')
     def pheader(items):
+        """Recent Weather identifier"""
         return items['header']
 
     header, string = pheader(string)
     if header:
         phenomena = []
-        
+
         # not sure if reported phenomena follows this order mandatory
         # there is no indication otherwise, and their only ever referenced
         # in this order; its is unfundamented assumption
@@ -343,10 +347,13 @@ def precentweather(string):
         return (), string
 
 def pwindshear(string):
+    """Returns a tuple with all runways reported having windshear or 'ALL'"""
+
     @search(r"""
         (?P<header>WS)
     """)
     def pheader(items):
+        """Windshear identifier"""
         return items['header']
 
     @occurs(10)
@@ -354,6 +361,7 @@ def pwindshear(string):
         RWY(?P<rwy>[\d]{2}(L|C|R)?)
     """)
     def prwys(items):
+        """Returns the windshear runways tuple"""
         return items['rwy']
 
     is_windshear, string = pheader(string)
@@ -371,6 +379,9 @@ def pwindshear(string):
     /S(?P<state>\d)
 """)
 def psea(items):
+    """Returns a tuple (int, int) for sea temperature and state
+    respectively"""
+
     temperaturetuple = namedtuple('Sea', 'temperature state')
     temperature = int(items['temperature'])
     if items['temperature_signal'] is not None:
@@ -379,6 +390,8 @@ def psea(items):
     return temperaturetuple(temperature, state)
 
 def psupplementary(string):
+    """Returns the supplementary information tuple"""
+
     supplementarytuple = namedtuple(
         'SupplementaryInfo',
         'recent_weather windshear sea rwy_state')
