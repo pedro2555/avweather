@@ -28,7 +28,7 @@ with open('./README.rst', 'r') as readme:
 setup(
     name = 'avweather',
     packages = ['avweather',],
-    version = '0.0.6',
+    version = '0.0.7',
     description = "Aviation Weather Tools",
     long_description = long_description,
     keywords = ['metar',],
