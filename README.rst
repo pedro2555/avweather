@@ -29,6 +29,15 @@ All metar information is parsed to python primitive data types with no transform
 Changelog
 =========
 
+0.0.8
+
+- Raise ValueError on missing required fields in metar
+
+0.0.7
+
+- Supplementary Information parsing (still missing runway states)
+- Fixed, parsing cardinal directions should be greedy (NE over N)
+
 0.0.6
 
 - Added support for unavailable and variable wind reports
