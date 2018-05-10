@@ -29,6 +29,11 @@ All metar information is parsed to python primitive data types with no transform
 Changelog
 =========
 
+0.0.9
+
+- Visbility value normalization (from 9999 to 10000)
+- verticalvis and skyclear added SkyConditions tuple
+
 0.0.8
 
 - Raise ValueError on missing required fields in metar
