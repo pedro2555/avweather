@@ -114,12 +114,15 @@ def pvis(item):
     """
     tvisibility = namedtuple('Visibility', 'distance ndv min_distance min_direction')
 
+    distance = int(item['distance'])
+    if distance == 9999:
+        distance += 1
     ndv = item['ndv'] is not None
     min_distance = item['min_distance']
     if min_distance is not None:
         min_distance = int(min_distance)
     return tvisibility(
-        int(item['distance']),
+        distance,
         ndv,
         min_distance,
         item['min_direction'],

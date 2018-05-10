@@ -144,9 +144,12 @@ class MetarTests(unittest.TestCase):
     def test_pvis(self, test):
         dist, ndv, mindist, mindistdir = test
 
-        self.assertIn(dist, range(10000))
+        if dist % 5 != 0:
+            self.fail('Wrong approximation in visibility')
+
+        self.assertIn(dist, range(10001))
         self.assertIsInstance(ndv, bool)
-        self.assertIn(mindist, (*range(10000), None))
+        self.assertIn(mindist, (*range(10001), None))
         if mindist is None:
             self.assertEqual(mindistdir, None)
         else:
