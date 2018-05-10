@@ -25,7 +25,7 @@ from . import _metar_parsers as _p
 def parse(string):
     """Parses a METAR or SPECI text report into python primitives.
 
-    Implementation based on Annex 3 to the Convetion on Internation Civil
+    Implementation based on Annex 3 to the Convetion on International Civil
     Aviation, as published by ICAO, 16th Edition July 2007.
     """
     metartuple = namedtuple(
