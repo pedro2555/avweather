@@ -47,6 +47,17 @@ class MetarTests(unittest.TestCase):
         self.assertEqual(test.unmatched, '')
 
     @data(
+        (
+            'METAR LPPT 191800Z 35015KT FEW040TCU 11/06 Q1016',
+            'Missing required field visibility in metar .*$',
+        ),
+    )
+    @unpack
+    def test_p_attributeerror(self, string, errorexp):
+        with self.assertRaisesRegexp(ValueError, errorexp):
+            parse(string)
+
+    @data(
         'METAR',
         'SPECI',
     )

@@ -150,7 +150,7 @@ def prvr(rvr):
         rvr['tend'],
     )
 
-@search(r'(?P<intensity>\+|-)?')
+@search(r'(?P<intensity>\+|-|VC)?')
 def pintensity(item):
     """Returns a string matching a '-' or '='"""
     return item['intensity']
@@ -277,6 +277,10 @@ def psky(string):
         return None, string
 
     visibility, string = pvis(string)
+    if visibility is None:
+        raise ValueError('Missing required field visibility in metar %s' %
+                         string)
+
     rvr, string = prvr(string)
 
     tweather = namedtuple('Weather', 'precipitation obscuration other')
