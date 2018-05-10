@@ -255,7 +255,7 @@ class MetarTests(unittest.TestCase):
         'FEW011',
         'FEW014 BKN025CB',
     )
-    @parser_test(pcloudsverticalvis)
+    @parser_test(pclouds)
     def test_pclouds(self, test):
         self.assertIsInstance(test, tuple)
         self.assertTrue(len(test) > 0)
@@ -267,13 +267,13 @@ class MetarTests(unittest.TestCase):
             self.assertIn(cloud.type, ('CB', 'TCU', '///', None))
 
     @data('VV010', 'VV001', 'VV///')
-    @parser_test(pcloudsverticalvis)
-    def test_pverticalvv(self, test):
+    @parser_test(pverticalvis)
+    def test_pverticalvis(self, test):
         self.assertIsInstance(test, int)
         self.assertTrue(test >= -1)
 
     @data('SKC', 'NSC', 'NCD')
-    @parser_test(pcloudsverticalvis)
+    @parser_test(pskyclear)
     def test_pskyclear(self, test):
         self.assertIn(test, ('SKC', 'NSC', 'NCD'))
 
