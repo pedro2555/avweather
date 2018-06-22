@@ -166,7 +166,7 @@ def ppercipitation(string):
 
     @occurs(10)
     @search(r"""(?P<phenomena>
-        DZ|RA|SN|SG|PL|DS|SS|FZDZ|FZRA|FZUP|SHGR|SHGS|SGRA|SHSN|TSGR|TSGS|TSPL|
+        DZ|RA|SN|SG|PL|DS|SS|FZDZ|FZRA|FZUP|SHGR|SHGS|SHRA|SHSN|TSGR|TSGS|TSPL|
         TSRA|TSSN|UP
     )""")
     def pphenomena(item):

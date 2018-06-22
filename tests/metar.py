@@ -218,6 +218,10 @@ class MetarTests(unittest.TestCase):
         (
             '+RASN',
             ('+', ('RA', 'SN'))
+        ),
+        (
+            'SHRA',
+            ('', ('SHRA',))
         ),)
     @unpack
     @parser_test(ppercipitation)
