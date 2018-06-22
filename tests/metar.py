@@ -240,6 +240,7 @@ class MetarTests(unittest.TestCase):
         'OVC014',
         'FEW011',
         'FEW014 BKN025CB',
+        'FEW040TCU',
     )
     @parser_test(pcloudsverticalvis)
     def testpclouds(self, test):
