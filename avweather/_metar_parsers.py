@@ -114,12 +114,15 @@ def pvis(item):
     """
     tvisibility = namedtuple('Visibility', 'distance ndv min_distance min_direction')
 
+    distance = int(item['distance'])
+    if distance == 9999:
+        distance += 1
     ndv = item['ndv'] is not None
     min_distance = item['min_distance']
     if min_distance is not None:
         min_distance = int(min_distance)
     return tvisibility(
-        int(item['distance']),
+        distance,
         ndv,
         min_distance,
         item['min_direction'],
@@ -150,7 +153,7 @@ def prvr(rvr):
         rvr['tend'],
     )
 
-@search(r'(?P<intensity>\+|-)?')
+@search(r'(?P<intensity>\+|-|VC)?')
 def pintensity(item):
     """Returns a string matching a '-' or '='"""
     return item['intensity']
@@ -215,56 +218,46 @@ def potherphenomena(string):
 
     return tother_phenomena(intensity, phenomena), tail
 
-def pcloudsverticalvis(string):
-    """Returns tuple for clouds if reported, or int for vertical visibility if
-    reported instead, or 'skyclear' if any of skyclear indications is found.
+@occurs(4)
+@search(r"""
+    (?P<amount>FEW|SCT|BKN|OVC)
+    (?P<height>[\d]{3}|///)
+    (?P<type>CB|TCU|///)?
+""")
+def pclouds(item):
+    """Returns ((amount, height, type),) of ((string, int, string),) for
+    clouds or ()"""
+    tcloud = namedtuple('Cloud', 'amount height type')
+    height = item['height']
+    if height == '///':
+        height = -1
+    else:
+        height = int(height)
+    return tcloud(item['amount'], height, item['type'])
+
+@search(r"""
+    VV(?P<verticalvis>[\d]{3}|///)
+""")
+def pverticalvis(item):
+    """Returns int for the vertical visibility, -1 for unavailable or None
     """
-    @occurs(4)
-    @search(r"""
-        (?P<amount>FEW|SCT|BKN|OVC)
-        (?P<height>[\d]{3}|///)
-        (?P<type>CB|TCU|///)?
-    """)
-    def pclouds(item):
-        """Returns ((amount, height, type),) of ((string, int, string),) for
-        clouds or ()"""
-        tcloud = namedtuple('Cloud', 'amount height type')
-        height = item['height']
-        if height == '///':
-            height = -1
-        else:
-            height = int(height)
-        return tcloud(item['amount'], height, item['type'])
-    clouds, tail = pclouds(string)
-    if clouds:
-        return clouds, tail
+    verticalvis = item['verticalvis']
+    if verticalvis == '///':
+        return -1
+    return int(verticalvis)
 
-    @search(r"""
-        VV(?P<verticalvis>[\d]{3}|///)
-    """)
-    def pverticalvis(item):
-        """Returns int for the vertical visibility, -1 for unavailable or None
-        """
-        verticalvis = item['verticalvis']
-        if verticalvis == '///':
-            return -1
-        return int(verticalvis)
-    verticalvis, tail = pverticalvis(string)
-    if verticalvis is not None:
-        return verticalvis, tail
-
-    @search(r'(?P<skyclear>SKC|NSC|NCD)')
-    def pskyclear(item):
-        """Returns 'skyclear' or None"""
-        return item['skyclear']
-    skyclear, tail = pskyclear(string)
-    return skyclear, tail
+@search(r'(?P<skyclear>SKC|NSC|NCD)')
+def pskyclear(item):
+    """Returns 'skyclear' or None"""
+    return item['skyclear']
 
 def psky(string):
     """Returns (visibility rvr weather clouds) for all the function returns
     above.
     """
-    tsky_conditions = namedtuple('SkyConditions', 'visibility rvr weather clouds')
+    tsky_conditions = namedtuple(
+        'SkyConditions',
+        'visibility rvr weather clouds verticalvis clear')
 
     @search(r'(?P<cavok>CAVOK)?')
     def pcavok(item):
@@ -277,6 +270,10 @@ def psky(string):
         return None, string
 
     visibility, string = pvis(string)
+    if visibility is None:
+        raise ValueError('Missing required field visibility in metar %s' %
+                         string)
+
     rvr, string = prvr(string)
 
     tweather = namedtuple('Weather', 'precipitation obscuration other')
@@ -285,9 +282,16 @@ def psky(string):
     other, string = potherphenomena(string)
     current_weather = tweather(precipitation, obscuration, other)
 
-    clouds, string = pcloudsverticalvis(string)
+    clouds, string = pclouds(string)
+    verticalvis, string = pverticalvis(string)
+    clear, string = pskyclear(string)
 
-    return tsky_conditions(visibility, rvr, current_weather, clouds), string
+    return tsky_conditions(visibility,
+                           rvr,
+                           current_weather,
+                           clouds,
+                           verticalvis,
+                           clear), string
 
 @search(r"""
     (?P<air_signal>M)?

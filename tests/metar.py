@@ -37,7 +37,7 @@ class MetarTests(unittest.TestCase):
         'METAR LPPT 010000Z AUTO 00001KT CAVOK 03/M04 Q1013',
         'METAR LPPT 270130Z 34012KT 9999 FEW011 12/10 Q1013',
     )
-    def testp(self, string):
+    def test_p(self, string):
         test = parse(string)
 
         if test.reporttype != 'NIL':
@@ -47,11 +47,22 @@ class MetarTests(unittest.TestCase):
         self.assertEqual(test.unmatched, '')
 
     @data(
+        (
+            'METAR LPPT 191800Z 35015KT FEW040TCU 11/06 Q1016',
+            'Missing required field visibility in metar .*$',
+        ),
+    )
+    @unpack
+    def test_p_attributeerror_vis(self, string, errorexp):
+        with self.assertRaisesRegexp(ValueError, errorexp):
+            parse(string)
+
+    @data(
         'METAR',
         'SPECI',
     )
     @parser_test(ptype)
-    def testptype(self, test):
+    def test_ptype(self, test):
         self.assertIn(test, ('METAR', 'SPECI'))
 
     @data(
@@ -60,7 +71,7 @@ class MetarTests(unittest.TestCase):
         'KEWR',
     )
     @parser_test(plocation)
-    def testplocation(self, test):
+    def test_plocation(self, test):
         self.assertIsInstance(test, str)
         self.assertEqual(len(test), 4)
         self.assertTrue(test[0].isalpha())
@@ -72,7 +83,7 @@ class MetarTests(unittest.TestCase):
         '300200Z',
     )
     @parser_test(ptime)
-    def testptime(self, test):
+    def test_ptime(self, test):
         day, hour, minute = test
         self.assertIsInstance(day, int)
         self.assertIsInstance(hour, int)
@@ -83,7 +94,7 @@ class MetarTests(unittest.TestCase):
         'NIL',
     )
     @parser_test(preporttype)
-    def testpreporttype(self, test):
+    def test_preporttype(self, test):
         self.assertIn(test, ('AUTO', 'NIL'))
 
     @data(
@@ -93,7 +104,7 @@ class MetarTests(unittest.TestCase):
     )
     @unpack
     @parser_test(preporttype)
-    def testpreporttype_value(self, test, expected):
+    def test_preporttype_value(self, test, expected):
         self.assertEqual(test, expected)
 
     @data(
@@ -106,7 +117,7 @@ class MetarTests(unittest.TestCase):
         '/////KT',
     )
     @parser_test(pwind)
-    def testpwind(self, test):
+    def test_pwind(self, test):
         direction, speed, gust, unit, vrbfrom, vrbto = test
         self.assertIn(direction, (*range(359), 'VRB', '///'))
         self.assertIn(speed, (*range(999), '//'))
@@ -119,7 +130,7 @@ class MetarTests(unittest.TestCase):
     @data(('CAVOK', None),)
     @unpack
     @parser_test(psky)
-    def testpsky(self, test, expected):
+    def test_psky(self, test, expected):
         self.assertEqual(test, expected)
 
     @data(
@@ -130,12 +141,15 @@ class MetarTests(unittest.TestCase):
         '9000 1000NE',
     )
     @parser_test(pvis)
-    def testpvis(self, test):
+    def test_pvis(self, test):
         dist, ndv, mindist, mindistdir = test
 
-        self.assertIn(dist, range(10000))
+        if dist % 5 != 0:
+            self.fail('Wrong approximation in visibility')
+
+        self.assertIn(dist, range(10001))
         self.assertIsInstance(ndv, bool)
-        self.assertIn(mindist, (*range(10000), None))
+        self.assertIn(mindist, (*range(10001), None))
         if mindist is None:
             self.assertEqual(mindistdir, None)
         else:
@@ -149,7 +163,7 @@ class MetarTests(unittest.TestCase):
         'R01/P0250',
     )
     @parser_test(prvr)
-    def testprvr(self, test):
+    def test_prvr(self, test):
         self.assertIsInstance(test, tuple)
 
         for rwy, rvr_data in test:
@@ -175,13 +189,13 @@ class MetarTests(unittest.TestCase):
     )
     @unpack
     @parser_test(prvr)
-    def testprvr_value(self, test, expected):
+    def test_prvr_value(self, test, expected):
         test = test[0]
         self.assertEqual(test, expected)
 
     @data('RA',)
     @parser_test(ppercipitation)
-    def testppercipitation(self, test):
+    def test_ppercipitation(self, test):
         intensity, phenomena = test
 
         self.assertIn(intensity, ('+', '-', ''))
@@ -207,7 +221,7 @@ class MetarTests(unittest.TestCase):
         ),)
     @unpack
     @parser_test(ppercipitation)
-    def testppercipitation_value(self, test, expected):
+    def test_ppercipitation_value(self, test, expected):
         self.assertEqual(test, expected)
 
     @data(
@@ -217,7 +231,7 @@ class MetarTests(unittest.TestCase):
     )
     @unpack
     @parser_test(pobscuration)
-    def testpobscuration(self, test, lenght):
+    def test_pobscuration(self, test, lenght):
         self.assertIsInstance(test, tuple)
         self.assertTrue(len(test) == lenght)
 
@@ -229,7 +243,7 @@ class MetarTests(unittest.TestCase):
     )
     @unpack
     @parser_test(potherphenomena)
-    def testpotherphenomena(self, test, lenght):
+    def test_potherphenomena(self, test, lenght):
         if lenght is None:
             self.assertEqual(test, None)
         else:
@@ -242,8 +256,8 @@ class MetarTests(unittest.TestCase):
         'FEW014 BKN025CB',
         'FEW040TCU',
     )
-    @parser_test(pcloudsverticalvis)
-    def testpclouds(self, test):
+    @parser_test(pclouds)
+    def test_pclouds(self, test):
         self.assertIsInstance(test, tuple)
         self.assertTrue(len(test) > 0)
         self.assertTrue(len(test) <= 4)
@@ -254,14 +268,14 @@ class MetarTests(unittest.TestCase):
             self.assertIn(cloud.type, ('CB', 'TCU', '///', None))
 
     @data('VV010', 'VV001', 'VV///')
-    @parser_test(pcloudsverticalvis)
-    def testpverticalvv(self, test):
+    @parser_test(pverticalvis)
+    def test_pverticalvis(self, test):
         self.assertIsInstance(test, int)
         self.assertTrue(test >= -1)
 
     @data('SKC', 'NSC', 'NCD')
-    @parser_test(pcloudsverticalvis)
-    def testpskyclear(self, test):
+    @parser_test(pskyclear)
+    def test_pskyclear(self, test):
         self.assertIn(test, ('SKC', 'NSC', 'NCD'))
 
     @data('RERA', 'RETS')
@@ -277,7 +291,7 @@ class MetarTests(unittest.TestCase):
     )
     @unpack
     @parser_test(pwindshear)
-    def test_windshear(self, test, lenght):
+    def test_pwindshear(self, test, lenght):
         if lenght == 0:
             self.assertEqual(test, 'ALL')
         else:

@@ -37,7 +37,7 @@ def search(regex):
 
         def func_wrapper(tail):
             """Returns the decorated search wrapper"""
-            match = re.search(regex, tail.strip(), re.I | re.X)
+            match = re.search('^' + regex, tail.strip(), re.I | re.X)
             if match is None:
                 return None, tail
             item = parse_func(match.groupdict())

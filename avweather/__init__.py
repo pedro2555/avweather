@@ -21,3 +21,5 @@ You should have received a copy of the GNU General Public License
 along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 """
 from . import _parsers
+
+__version__ = '0.0.9'
