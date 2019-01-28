@@ -23,7 +23,7 @@ from collections import namedtuple
 from avweather._parsers import search, occurs
 
 @search(r"""
-    (?P<type>METAR|SPECI|METAR\sCOR|SPECI\sCOR)
+    (?P<type>METAR\sCOR|SPECI\sCOR|METAR|SPECI)
 """)
 def ptype(metartype):
     """Returns a string with the METAR type or None"""
