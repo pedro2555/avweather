@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
@@ -20,18 +19,26 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Aviation Weather.  If not, see <http://www.gnu.org/licenses/>.
 """
-from string import ascii_uppercase
-from string import digits
-from random import choice
+import unittest
+from collections import OrderedDict
 
-def parser_test(parser_func):
-    def decorator(test_func):
-        def wrapper(self, string, *args, **kwargs):
-            random = ' 0EC3F0F0992C2F5F1C1BA80528E2A8F7A965126A'
-            test, tail = parser_func(string + random)
-            self.assertEqual(tail, random)
-            self.assertNotEqual(string, tail)
-            test_func(self, test, *args, **kwargs) # run the actual tests
-        return wrapper
-    return decorator
+from avweather import metar
 
+class BaseTest(unittest.TestCase):
+  def setUp(self):
+    self.metar_parts = OrderedDict()
+    self.metar_parts['headers'] = 'METAR YUDO 221630Z'
+    self.metar_parts['wind'] = '24008KT'
+    self.metar_parts['visibility'] = '0350'
+    self.metar_parts['rvr'] = 'R32/0400'
+    self.metar_parts['weather'] = 'RA'
+    self.metar_parts['cloud'] = 'FEW015'
+    self.metar_parts['air'] = '17/10 Q0995'
+    self.metar_parts['supplementary'] = 'REFZRA'
+    self.metar_parts['trend'] = 'NOSIG'
+
+  def tearDown(self):
+    self.metar = metar.parse(' '.join([
+      part for part in self.metar_parts.values()
+      if part is not None
+    ]))
