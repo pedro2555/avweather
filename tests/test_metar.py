@@ -48,7 +48,7 @@ class MetarTests(unittest.TestCase):
     )
     @unpack
     def test_p_attributeerror_vis(self, string, errorexp):
-        with self.assertRaisesRegexp(ValueError, errorexp):
+        with self.assertRaisesRegex(ValueError, errorexp):
             parse(string)
 
     @data(
