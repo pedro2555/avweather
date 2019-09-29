@@ -1,14 +1,16 @@
-bin
-dist
-include
-lib
-local
-*.pyc
-*.egg-info
-man
-**/*.pyc
-*.egg-info
-.eggs
 sample.data
+
+# editors
+.vscode/
+
+# virtual environment
+venv/
 pip-selfcheck.json
-share
+
+# python artigacts
+__pycache__
+*.pyc
+
+# setuptools artifacts
+*.egg-info/
+build/

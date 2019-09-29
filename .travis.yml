@@ -2,7 +2,7 @@ language: python
 python:
   - "3.5"
   - "3.6"
-install:
-  - pip install -r dev-requirements.txt
+  - "3.7"
 script:
-  - python setup.py test
+  - python -m pytest tests
+  - python -m pylint avweather

@@ -3,7 +3,7 @@
 """
 Aviation Weather
 
-Copyright (C) 2018  Pedro Rodrigues <prodrigues1990@gmail.com>
+Copyright (C) 2018 - 2019 Pedro Rodrigues <prodrigues1990@gmail.com>
 
 This file is part of Aviation Weather.
 
@@ -27,44 +27,19 @@ from ddt import unpack
 from avweather.metar import parse
 from avweather._metar_parsers import *
 
-from . import parser_test
+def parser_test(parser_func):
+    def decorator(test_func):
+        def wrapper(self, string, *args, **kwargs):
+            random = ' 0EC3F0F0992C2F5F1C1BA80528E2A8F7A965126A'
+            test, tail = parser_func(string + random)
+            self.assertEqual(tail, random)
+            self.assertNotEqual(string, tail)
+            test_func(self, test, *args, **kwargs) # run the actual tests
+        return wrapper
+    return decorator
 
 @ddt
 class MetarTests(unittest.TestCase):
-
-    @data(
-        'METAR A000 010000Z NIL',
-        'METAR LPPT 010000Z AUTO 00001KT CAVOK 03/M04 Q1013',
-        'METAR LPPT 270130Z 34012KT 9999 FEW011 12/10 Q1013',
-    )
-    def test_p(self, string):
-        test = parse(string)
-
-        if test.reporttype != 'NIL':
-            self.assertEqual(test.report.pressure, 1013)
-        else:
-            self.assertIs(test.report, None)
-        self.assertEqual(test.unmatched, '')
-
-    @data(
-        (
-            'METAR LPPT 191800Z 35015KT FEW040TCU 11/06 Q1016',
-            'Missing required field visibility in metar .*$',
-        ),
-    )
-    @unpack
-    def test_p_attributeerror_vis(self, string, errorexp):
-        with self.assertRaisesRegexp(ValueError, errorexp):
-            parse(string)
-
-    @data(
-        'METAR',
-        'SPECI',
-    )
-    @parser_test(ptype)
-    def test_ptype(self, test):
-        self.assertIn(test, ('METAR', 'SPECI'))
-
     @data(
         'A000',
         'LPPT',
