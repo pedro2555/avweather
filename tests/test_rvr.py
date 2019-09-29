@@ -3,7 +3,7 @@
 """
 Aviation Weather
 
-Copyright (C) 2018  Pedro Rodrigues <prodrigues1990@gmail.com>
+Copyright (C) 2018 - 2019 Pedro Rodrigues <prodrigues1990@gmail.com>
 
 This file is part of Aviation Weather.
 
@@ -184,7 +184,7 @@ class TestRunwayVisualRange(BaseTest):
     for runway, rvr in self.metar.report.sky.rvr:
         self.assertIn(runway, self.expected)
         expected = self.expected[runway]
-        
+
         self.assertEqual(expected['distance'], rvr.distance)
         self.assertEqual(expected['modifier'], rvr.modifier)
         self.assertEqual(expected['variation'], rvr.variation)
