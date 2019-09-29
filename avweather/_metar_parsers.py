@@ -328,27 +328,26 @@ def precentweather(string):
         return items['header']
 
     header, string = pheader(string)
-    if header:
-        phenomena = []
-
-        # not sure if reported phenomena follows this order mandatory
-        # there is no indication otherwise, and their only ever referenced
-        # in this order; its is unfundamented assumption
-        percipitation, string = ppercipitation(string)
-        if percipitation:
-            phenomena.append(percipitation.phenomena)
-
-        obscuration, string = pobscuration(string)
-        if obscuration:
-            phenomena.append(obscuration)
-
-        other, string = potherphenomena(string)
-        if other:
-            phenomena.append(other)
-
-        return tuple(phenomena), string
-    else:
+    if not header:
         return (), string
+    phenomena = []
+
+    # not sure if reported phenomena follows this order mandatory
+    # there is no indication otherwise, and their only ever referenced
+    # in this order; its is unfundamented assumption
+    percipitation, string = ppercipitation(string)
+    if percipitation:
+        phenomena.append(percipitation.phenomena)
+
+    obscuration, string = pobscuration(string)
+    if obscuration:
+        phenomena.append(obscuration)
+
+    other, string = potherphenomena(string)
+    if other:
+        phenomena.append(other)
+
+    return tuple(phenomena), string
 
 def pwindshear(string):
     """Returns a tuple with all runways reported having windshear or 'ALL'"""
