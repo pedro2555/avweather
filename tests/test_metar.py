@@ -41,17 +41,6 @@ def parser_test(parser_func):
 @ddt
 class MetarTests(unittest.TestCase):
     @data(
-        (
-            'METAR LPPT 191800Z 35015KT FEW040TCU 11/06 Q1016',
-            'Missing required field visibility in metar .*$',
-        ),
-    )
-    @unpack
-    def test_p_attributeerror_vis(self, string, errorexp):
-        with self.assertRaisesRegex(ValueError, errorexp):
-            parse(string)
-
-    @data(
         'A000',
         'LPPT',
         'KEWR',

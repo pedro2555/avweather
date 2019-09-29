@@ -27,10 +27,11 @@ Test cases for visibility elements, as specified in ICAO Annex 3 sections:
  * Minimum distance: section 4.2.4.4 a)
  * Minimum distane direction: section 4.2.4.4 a)
 """
+from ddt import ddt, data, unpack
 from . import BaseTest
+from avweather import metar
 
 class TestVisibility(BaseTest):
-
   def setUp(self):
     super().setUp()
 
@@ -60,3 +61,16 @@ class TestVisibility(BaseTest):
     self.assertEqual(self.ndv, self.metar.report.sky.visibility.ndv)
     self.assertEqual(self.min_distance, self.metar.report.sky.visibility.min_distance)
     self.assertEqual(self.min_direction, self.metar.report.sky.visibility.min_direction)
+
+@ddt
+class MetarTests(BaseTest):
+    @data(
+        (
+            'METAR LPPT 191800Z 35015KT FEW040TCU 11/06 Q1016',
+            'Missing required field visibility in metar .*$',
+        ),
+    )
+    @unpack
+    def test_p_attributeerror_vis(self, string, msg):
+        with self.assertRaisesRegex(ValueError, msg):
+            metar.parse(string)
